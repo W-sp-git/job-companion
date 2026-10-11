@@ -1,0 +1,20 @@
+# ===== 密钥（切勿提交）=====
+.env
+api_key.txt
+
+# ===== Python =====
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# ===== Node =====
+node_modules/
+dist/
+
+# ===== 运行时数据 =====
+backend/data/
+
+# ===== 系统 =====
+.DS_Store
