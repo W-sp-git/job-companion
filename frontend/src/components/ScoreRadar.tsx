@@ -7,10 +7,13 @@ export default function ScoreRadar({ data }: { data: DimScore[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <RadarChart data={data} outerRadius="70%">
-        <PolarGrid stroke="#404040" />
-        <PolarAngleAxis dataKey="name" tick={{ fill: "#a3a3a3", fontSize: 12 }} />
+        <PolarGrid stroke="rgb(36 31 23 / 0.22)" />
+        <PolarAngleAxis
+          dataKey="name"
+          tick={{ fill: "#6a6152", fontSize: 12, fontFamily: "PingFang SC, Hiragino Sans GB, sans-serif" }}
+        />
         <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
-        <Radar dataKey="score" stroke="#10b981" fill="#10b981" fillOpacity={0.35} />
+        <Radar dataKey="score" stroke="#b23a24" strokeWidth={2} fill="#b23a24" fillOpacity={0.16} />
       </RadarChart>
     </ResponsiveContainer>
   );

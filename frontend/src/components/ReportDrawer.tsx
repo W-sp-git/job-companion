@@ -1,81 +1,100 @@
 import { useState } from "react";
 
 import ScoreRadar from "@/components/ScoreRadar";
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, CountNumber, Stamp } from "@/components/ui";
 import type { InterviewReport } from "@/api/types";
 
 export default function ReportDrawer({ report, onClose }: { report: InterviewReport; onClose: () => void }) {
   const [openQ, setOpenQ] = useState<number | null>(null);
   return (
-    <div className="fixed inset-0 z-30 flex justify-end bg-black/60" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-30 flex justify-end bg-ink/45 backdrop-blur-[2px] animate-fade-in"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-xl h-full overflow-y-auto bg-neutral-900 border-l border-neutral-800 p-6 space-y-6"
+        className="relative w-full max-w-xl h-full overflow-y-auto bg-sheet border-l-2 border-ink p-6 space-y-6 animate-slide-in-right"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between">
+        <span className="tape top-3 left-1/2 -translate-x-1/2 w-28 rotate-[-2deg]" aria-hidden="true" />
+        <Stamp size="lg" className="absolute right-7 top-16 pointer-events-none">阅</Stamp>
+
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold">面试复盘报告</h2>
-            <p className="text-xs text-neutral-500 mt-1">基于逐题评分与整场表现的自动分析</p>
+            <div className="eyebrow mb-1.5">Post-Interview Review</div>
+            <h2 className="font-display text-2xl font-black tracking-wide">面试复盘报告</h2>
+            <p className="font-kai text-xs text-ink-soft mt-1.5">基于逐题评分与整场表现的自动分析</p>
           </div>
           <Button variant="ghost" onClick={onClose}>
             关闭
           </Button>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-emerald-400">{Math.round(Number(report.overall_score))}</div>
-            <div className="text-xs text-neutral-500 mt-1">综合分 / 100</div>
+        <div className="flex items-center gap-6 border-y border-rule py-5">
+          <div className="text-center shrink-0">
+            <div className="font-latin text-6xl text-seal leading-none">
+              <CountNumber value={Number(report.overall_score)} />
+            </div>
+            <div className="font-mono text-[10px] tracking-[0.2em] text-ink-faint mt-2.5">综合分 / 100</div>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <ScoreRadar data={report.dimension_scores || []} />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-emerald-400 mb-2">优势</h3>
-            <ul className="space-y-1.5 text-sm text-neutral-300">
+            <h3 className="flex items-baseline gap-1.5 font-mono text-[11px] tracking-[0.2em] text-moss mb-2.5">
+              <span className="text-seal">▪</span>优势 STRENGTHS
+            </h3>
+            <ul className="space-y-1.5 text-sm leading-6">
               {(report.strengths || []).map((s, i) => (
-                <li key={i}>· {s}</li>
+                <li key={i} className="flex gap-2">
+                  <span className="text-moss shrink-0">✓</span>
+                  <span>{s}</span>
+                </li>
               ))}
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-amber-400 mb-2">待提升</h3>
-            <ul className="space-y-1.5 text-sm text-neutral-300">
+            <h3 className="flex items-baseline gap-1.5 font-mono text-[11px] tracking-[0.2em] text-ochre mb-2.5">
+              <span className="text-seal">▪</span>待提升 TO IMPROVE
+            </h3>
+            <ul className="space-y-1.5 text-sm leading-6">
               {(report.weaknesses || []).map((s, i) => (
-                <li key={i}>· {s}</li>
+                <li key={i} className="flex gap-2">
+                  <span className="text-ochre shrink-0">△</span>
+                  <span>{s}</span>
+                </li>
               ))}
             </ul>
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold mb-2">逐题回顾（点击展开更优答法）</h3>
-          <div className="space-y-2">
+          <h3 className="font-display text-base font-bold mb-2.5">逐题回顾（点击展开更优答法）</h3>
+          <div className="space-y-2 stagger">
             {(report.per_question || []).map((q, i) => (
-              <div key={i} className="rounded-lg border border-neutral-800 overflow-hidden">
+              <div key={i} className="border border-rule-strong bg-sheet-bright rounded-[2px] overflow-hidden">
                 <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-left hover:bg-neutral-800/50"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-sm text-left hover:bg-paper-deep/50 transition-colors"
                   onClick={() => setOpenQ(openQ === i ? null : i)}
                 >
-                  <span className="truncate pr-2">
-                    第 {q.round} 题：{q.question}
+                  <span className="truncate pr-2">第 {q.round} 题：{q.question}</span>
+                  <span className="font-latin text-xl text-seal leading-none shrink-0">
+                    <CountNumber value={Number(q.score)} decimals={1} />
                   </span>
-                  <Badge tone={Number(q.score) >= 7 ? "green" : Number(q.score) >= 5 ? "amber" : "red"}>
-                    {Number(q.score).toFixed(1)}
-                  </Badge>
                 </button>
                 {openQ === i && (
-                  <div className="px-3 pb-3 text-sm space-y-2 border-t border-neutral-800 pt-2.5">
-                    <p className="text-neutral-400">
-                      <span className="text-neutral-500">你的回答：</span>
+                  <div className="px-3 pb-3 pt-2.5 text-sm space-y-3 border-t border-rule animate-fade-in">
+                    <p className="font-kai leading-6 text-ink-soft">
+                      <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">
+                        你的回答
+                      </span>
                       {q.answer_summary}
                     </p>
-                    <div className="rounded-md bg-emerald-950/40 border border-emerald-900/60 p-2.5">
-                      <span className="text-emerald-400 text-xs font-medium">更优答法</span>
-                      <p className="mt-1 whitespace-pre-wrap">{q.better_answer}</p>
+                    <div className="border-l-2 border-moss bg-moss/5 p-2.5 rounded-r-[2px]">
+                      <span className="font-mono text-[10px] tracking-[0.2em] text-moss">更优答法</span>
+                      <p className="mt-1 whitespace-pre-wrap font-kai leading-6">{q.better_answer}</p>
                     </div>
                   </div>
                 )}
@@ -85,14 +104,19 @@ export default function ReportDrawer({ report, onClose }: { report: InterviewRep
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold mb-2">改进行动</h3>
-          <ol className="space-y-1.5 text-sm text-neutral-300 list-decimal list-inside">
+          <h3 className="font-display text-base font-bold mb-2.5">改进行动</h3>
+          <ol className="space-y-2">
             {(report.improvement_plan || []).map((s, i) => (
-              <li key={i}>{s}</li>
+              <li key={i} className="flex gap-3 text-sm leading-6">
+                <span className="font-latin text-lg text-seal leading-6 w-6 text-right shrink-0">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span>{s}</span>
+              </li>
             ))}
           </ol>
           {!!report.recommended_practice?.length && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {report.recommended_practice.map((p, i) => (
                 <Badge key={i} tone="blue">
                   {p}

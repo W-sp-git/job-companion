@@ -18,29 +18,49 @@ export default function VersionDiff({
     : [{ added: true, removed: undefined, value: currText }];
 
   return (
-    <div className="fixed inset-0 z-30 bg-black/60 flex items-center justify-center p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-30 bg-ink/45 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fade-in"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-900 p-5"
+        className="sheet w-full max-w-3xl max-h-[85vh] overflow-y-auto p-5 animate-pop-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-sm">
-            版本对比：{previous ? `v${previous.version_no} → v${current.version_no}` : `v${current.version_no}（首个版本）`}
-          </h3>
-          <button className="text-neutral-400 hover:text-white text-sm" onClick={onClose}>
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <div className="eyebrow mb-1">Proof / 校样</div>
+            <h3 className="font-display text-base font-bold">
+              版本对比：
+              {previous
+                ? `v${previous.version_no} → v${current.version_no}`
+                : `v${current.version_no}（首个版本）`}
+            </h3>
+          </div>
+          <button
+            className="font-mono text-[11px] tracking-[0.14em] text-ink-soft hover:text-seal transition-colors"
+            onClick={onClose}
+          >
             关闭
           </button>
         </div>
-        <pre className="text-xs leading-relaxed whitespace-pre-wrap font-mono">
+        <div className="flex items-center gap-4 border-y border-rule py-1.5 mb-4 font-mono text-[10px] tracking-[0.14em] text-ink-faint">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 bg-moss/25 border border-moss/50" /> 新增
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 bg-seal/15 border border-seal/50" /> 删除
+          </span>
+        </div>
+        <pre className="font-mono text-xs leading-relaxed whitespace-pre-wrap">
           {parts.map((p, i) => (
             <span
               key={i}
               className={
                 p.added
-                  ? "text-emerald-400 bg-emerald-950/40"
+                  ? "text-moss bg-moss/8"
                   : p.removed
-                    ? "text-red-400 bg-red-950/40 line-through"
-                    : "text-neutral-400"
+                    ? "text-seal bg-seal/8 line-through decoration-seal/60"
+                    : "text-ink-soft"
               }
             >
               {p.value}

@@ -1,1 +1,416 @@
 @import "tailwindcss";
+
+/* ============================================================
+   求职作战档案室 · 纸感刊印风设计系统
+   纸 = 载体（暖米纸底 + 浅色纸张卡片）
+   墨 = 内容（近黑暖墨大字，宋体刊头）
+   印 = 态度（朱砂印章红作唯一强调色）
+   全部使用 macOS 系统字体，无网络字体依赖。
+   ============================================================ */
+
+@theme {
+  /* -------- 色彩 -------- */
+  --color-paper: #f2ecdf;
+  --color-paper-deep: #e8dfca;
+  --color-sheet: #faf6ea;
+  --color-sheet-bright: #fffdf5;
+
+  --color-ink: #241f17;
+  --color-ink-soft: #6a6152;
+  --color-ink-faint: #a79b83;
+
+  --color-rule: rgb(36 31 23 / 0.16);
+  --color-rule-strong: rgb(36 31 23 / 0.34);
+
+  --color-seal: #b23a24;
+  --color-seal-deep: #8c2a16;
+  --color-seal-soft: #c9604a;
+  --color-seal-wash: rgb(178 58 36 / 0.07);
+
+  --color-moss: #3e6b4f;
+  --color-ochre: #93691c;
+  --color-indigo: #3a5480;
+
+  /* -------- 字体 -------- */
+  --font-display: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --font-kai: "Kaiti SC", "STKaiti", "KaiTi", "Songti SC", serif;
+  --font-body: "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "Menlo", "Consolas", "Courier New", monospace;
+  --font-latin: "Bodoni 72", "Didot", Georgia, "Times New Roman", serif;
+
+  /* -------- 阴影（硬偏移，模拟印刷叠纸）-------- */
+  --shadow-print: 3px 3px 0 0 rgb(36 31 23 / 0.08);
+  --shadow-print-lg: 6px 6px 0 0 rgb(36 31 23 / 0.11);
+  --shadow-press: 1px 1px 0 0 rgb(36 31 23 / 0.14);
+
+  /* -------- 动效 -------- */
+  --animate-ink-up: ink-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-stamp-in: stamp-in 0.62s cubic-bezier(0.2, 1.35, 0.4, 1) both;
+  --animate-fade-in: fade-in 0.35s ease both;
+  --animate-slide-in-right: slide-in-right 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop-in: pop-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-blink: blink 1.05s steps(2, start) infinite;
+  --animate-press-pulse: press-pulse 1.3s ease-in-out infinite;
+  --animate-spin-seal: spin 0.9s linear infinite;
+
+  @keyframes ink-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes stamp-in {
+    0% { opacity: 0; transform: scale(1.9) rotate(-16deg); }
+    62% { opacity: 0.95; }
+    100% { opacity: 0.85; transform: scale(1) rotate(-8deg); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(28px) rotate(0.5deg); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  @keyframes press-pulse {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 1; }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+    /* 极淡的横格纸线（28px 一行） */
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 27px,
+      rgb(36 31 23 / 0.045) 27px,
+      rgb(36 31 23 / 0.045) 28px
+    );
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-seal);
+    color: var(--color-sheet);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-seal);
+    outline-offset: 2px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(36 31 23 / 0.26) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(36 31 23 / 0.2);
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* ---------- 纸张卡片 ---------- */
+  .sheet {
+    position: relative;
+    background-color: var(--color-sheet);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: 3px;
+    box-shadow: var(--shadow-print);
+  }
+  .sheet-hover {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .sheet-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-print-lg);
+  }
+
+  /* ---------- 刊头双线（粗线 + 细线）---------- */
+  .rule-double {
+    position: relative;
+    height: 5px;
+    background: linear-gradient(to bottom, var(--color-ink) 0, var(--color-ink) 2px, transparent 2px);
+  }
+  .rule-double::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--color-ink);
+    opacity: 0.4;
+  }
+
+  /* ---------- 小号印刷体眉标 ---------- */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    background: var(--color-seal);
+    flex: none;
+  }
+
+  /* ---------- 圆形印章 ---------- */
+  .stamp {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    mix-blend-mode: multiply;
+    opacity: 0.85;
+    transform: rotate(-8deg);
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    user-select: none;
+  }
+  .stamp::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 9999px;
+    border: 1px solid currentColor;
+    opacity: 0.6;
+  }
+
+  /* ---------- 方形篆刻印（徽标 / 头像印）---------- */
+  .seal-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-seal);
+    color: var(--color-sheet);
+    font-family: var(--font-display);
+    font-weight: 700;
+    border-radius: 3px;
+    box-shadow:
+      inset 0 0 0 2px var(--color-seal),
+      inset 0 0 0 3px rgb(250 246 234 / 0.62),
+      inset 0 0 0 4px var(--color-seal);
+    user-select: none;
+  }
+
+  /* ---------- 表单：下划线填空 ---------- */
+  .input-line {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dashed var(--color-rule-strong);
+    border-radius: 0;
+    padding: 0.4rem 0.1rem;
+    font: inherit;
+    color: inherit;
+    transition: border-color 0.15s ease;
+  }
+  .input-line::placeholder {
+    color: var(--color-ink-faint);
+  }
+  .input-line:focus {
+    outline: none;
+    border-bottom-style: solid;
+    border-bottom-color: var(--color-seal);
+  }
+  .input-line:disabled {
+    opacity: 0.5;
+  }
+
+  /* ---------- 表单：方格稿纸输入框 ---------- */
+  .paper-input {
+    width: 100%;
+    background-color: var(--color-sheet-bright);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: 2px;
+    padding: 0.6rem 0.75rem;
+    font: inherit;
+    color: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .paper-input::placeholder {
+    color: var(--color-ink-faint);
+  }
+  .paper-input:focus {
+    outline: none;
+    border-color: var(--color-seal);
+    box-shadow: 2px 2px 0 0 rgb(178 58 36 / 0.16);
+  }
+  .paper-input:disabled {
+    opacity: 0.55;
+  }
+
+  /* ---------- 答题纸（用户回答 / 手写感）---------- */
+  .answer-sheet {
+    background-color: #f7f0dd;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 25px,
+      rgb(36 31 23 / 0.06) 25px,
+      rgb(36 31 23 / 0.06) 26px
+    );
+    border: 1px solid rgb(36 31 23 / 0.22);
+    border-left: 3px solid rgb(178 58 36 / 0.5);
+    border-radius: 2px;
+    line-height: 26px;
+  }
+
+  /* ---------- 稿纸红边线（面试记录栏）---------- */
+  .manuscript {
+    border-left: 1px solid rgb(178 58 36 / 0.32);
+  }
+
+  /* ---------- 批注框（红虚线）---------- */
+  .annotate {
+    border: 1px dashed var(--color-seal);
+    background: var(--color-seal-wash);
+  }
+
+  /* ---------- 胶带 ---------- */
+  .tape {
+    position: absolute;
+    height: 20px;
+    background: rgb(206 187 148 / 0.55);
+    border-left: 1px dashed rgb(36 31 23 / 0.14);
+    border-right: 1px dashed rgb(36 31 23 / 0.14);
+    box-shadow: 0 1px 0 rgb(36 31 23 / 0.05);
+    pointer-events: none;
+  }
+
+  /* ---------- 对位十字线 ---------- */
+  .regmark {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    color: var(--color-rule-strong);
+    pointer-events: none;
+    background:
+      linear-gradient(currentColor, currentColor) center / 100% 1px no-repeat,
+      linear-gradient(currentColor, currentColor) center / 1px 100% no-repeat;
+  }
+
+  /* ---------- 纸纹噪点（全局覆盖）---------- */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0.34;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+
+  /* ---------- 卡片折角 ---------- */
+  .corner-fold::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 18px 18px 0;
+    border-color: transparent rgb(36 31 23 / 0.14) transparent transparent;
+    transition: border-width 0.18s ease;
+  }
+  .corner-fold:hover::after {
+    border-width: 0 24px 24px 0;
+    border-color: transparent var(--color-seal) transparent transparent;
+  }
+
+  /* ---------- 逐条入场（stagger）---------- */
+  .stagger > * {
+    animation: ink-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.16s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.22s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.28s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.34s; }
+  .stagger > *:nth-child(7) { animation-delay: 0.4s; }
+  .stagger > *:nth-child(8) { animation-delay: 0.46s; }
+
+  /* ---------- 流式光标 ---------- */
+  .ink-cursor {
+    display: inline-block;
+    width: 7px;
+    height: 15px;
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    background: var(--color-seal);
+    animation: var(--animate-blink);
+  }
+
+  /* ---------- 红色批改横线（挂载即描线）---------- */
+  .score-rule {
+    height: 3px;
+    background: rgb(36 31 23 / 0.14);
+    position: relative;
+    overflow: hidden;
+  }
+  .score-rule > span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--color-seal);
+    transform-origin: left center;
+    animation: draw-line 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
