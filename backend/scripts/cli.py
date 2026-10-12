@@ -57,7 +57,7 @@ async def _ping_tavily() -> tuple[str, float]:
 
 @app.command()
 def ping() -> None:
-    """对 5 类任务的模型与 Tavily 搜索各发一次请求，验证连通性。"""
+    """对各类任务的模型与 Tavily 搜索各发一次请求，验证连通性。"""
 
     async def run() -> None:
         from app.config import get_settings
@@ -69,7 +69,7 @@ def ping() -> None:
         table.add_column("耗时", justify="right")
         table.add_column("响应 / 错误", overflow="fold")
 
-        for task in ("interview", "judge", "ocr", "draft", "review"):
+        for task in ("interview", "judge", "ocr", "draft", "review", "cluster", "intel"):
             provider = settings.task_provider(task)
             model = settings.task_model(task)
             label = f"{task}\n{provider}/{model}"
@@ -267,6 +267,44 @@ def interview(
             await _stream_turn(graph, config, {"messages": [HumanMessage(content=answer)]})
 
         await close_interview_graph()
+
+    asyncio.run(run())
+
+
+# ---------- 公司背调 ----------
+
+@app.command()
+def intel(
+    company: str = typer.Argument(..., help="公司名"),
+    role: str = typer.Option("", "--role", help="目标岗位（可空）"),
+) -> None:
+    """生成公司背调情报：4 路检索 + 结构化抽取 + 防虚构校验，打印简报与校验摘要。"""
+
+    async def run() -> None:
+        from app.agents.intel_pipeline import run_intel_report
+        from app.db.database import init_db
+        from app.tools import profile_store
+
+        init_db()
+        rid = profile_store.create_intel_report("default", company, role)
+        profile_store.mark_intel_running(rid)
+        console.print(f"[bold]背调任务：[/bold]#{rid}  {company} / {role or '（未指定岗位）'}")
+
+        async def emit(data: dict) -> None:
+            if "report" in data:
+                payload = data["report"]
+                console.rule("[bold]情报简报")
+                console.print_json(json.dumps(payload["report"], ensure_ascii=False))
+                console.rule("[bold]校验摘要")
+                console.print_json(json.dumps(payload["verification"], ensure_ascii=False))
+                return
+            if data.get("stage") == "lane_done":
+                console.print(f"[dim]· {data.get('lane')} 完成：{data.get('count')} 条来源[/dim]")
+            elif data.get("label"):
+                console.print(f"[dim]· {data['label']}[/dim]")
+
+        await run_intel_report(rid, company, role, emit)
+        console.rule("[bold]完成")
 
     asyncio.run(run())
 

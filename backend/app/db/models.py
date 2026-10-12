@@ -83,3 +83,21 @@ class InterviewReport(Base):
     report_json: Mapped[dict] = mapped_column(JSON, default=dict)
     total_score: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class IntelReportRow(Base):
+    """公司背调存档：report_json 存 {report, verification, sources}，evidence_json 存原始检索素材。"""
+
+    __tablename__ = "intel_reports"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(64), index=True)
+    company: Mapped[str] = mapped_column(String(128), index=True)
+    target_role: Mapped[str] = mapped_column(String(128), default="")
+    status: Mapped[str] = mapped_column(String(16), default="created")  # created|running|done|failed
+    source_count: Mapped[int] = mapped_column(Integer, default=0)
+    report_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    evidence_json: Mapped[list] = mapped_column(JSON, default=list)
+    error: Mapped[str] = mapped_column(String(512), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
