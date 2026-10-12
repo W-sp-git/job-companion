@@ -129,6 +129,107 @@ export type CreatePayload = {
   max_rounds: number;
 };
 
+export type StatsTrendPoint = {
+  session_id: string;
+  date: string;
+  mode: string;
+  target_role: string;
+  company: string;
+  score: number;
+  dimensions: Record<string, number>;
+  questions: number;
+};
+
+export type InterviewStats = {
+  overview: {
+    session_count: number;
+    question_count: number;
+    avg_score: number;
+    best_score: number;
+  };
+  dimension_names: string[];
+  trend: StatsTrendPoint[];
+};
+
+export type WeaknessTheme = { theme: string; count: number; last_seen: string };
+
+export type WeaknessClusters = { clustered: boolean; themes: WeaknessTheme[] };
+
+export type IntelSource = { sid: number; lane: string; title: string; url: string; date?: string };
+
+export type ClaimStatus = "verified" | "unverified";
+
+export type IntelClaim = { text: string; status: ClaimStatus; sources: IntelSource[] };
+
+export type IntelHiring = {
+  position: string;
+  location: string;
+  trend: string;
+  status: ClaimStatus;
+  sources: IntelSource[];
+};
+
+export type IntelSalary = {
+  role_hint: string;
+  range_text: string;
+  notes: string;
+  status: ClaimStatus;
+  sources: IntelSource[];
+};
+
+export type IntelProcessStage = {
+  stage: string;
+  detail: string;
+  status: ClaimStatus;
+  sources: IntelSource[];
+};
+
+export type IntelRisk = { category: string; text: string; sources: IntelSource[] };
+
+export type IntelReport = {
+  company: string;
+  target_role: string;
+  summary: string;
+  summary_sources: IntelSource[];
+  basics: IntelClaim[];
+  hiring: IntelHiring[];
+  salary: IntelSalary[];
+  process: IntelProcessStage[];
+  risks: IntelRisk[];
+};
+
+export type IntelVerification = {
+  total_claims: number;
+  verified: number;
+  unverified: number;
+  dropped_risk: number;
+  coverage: number;
+  evidence_total: number;
+  notes: string[];
+};
+
+export type IntelReportPayload = {
+  report_id: number;
+  company: string;
+  target_role: string;
+  created_at: string;
+  report: IntelReport;
+  verification: IntelVerification;
+  sources: IntelSource[];
+};
+
+export type IntelReportMeta = {
+  id: number;
+  company: string;
+  target_role: string;
+  status: "created" | "running" | "done" | "failed";
+  source_count: number;
+  summary: string;
+  error: string;
+  created_at: string;
+  finished_at: string | null;
+};
+
 export const MODE_LABELS: Record<string, string> = {
   behavioral: "行为面试",
   technical: "技术面试",

@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 ENV_FILE = BACKEND_DIR / ".env"
 
-TASKS = ("interview", "judge", "ocr", "draft", "review")
+TASKS = ("interview", "judge", "ocr", "draft", "review", "cluster", "intel")
 
 PROVIDER_REGISTRY: dict[str, dict[str, str]] = {
     "dashscope": {
@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     review_llm_model: str = "glm-4-plus"
     mem0_llm_provider: str = "dashscope"
     mem0_llm_model: str = "qwen-flash"
+    cluster_llm_provider: str = "dashscope"
+    cluster_llm_model: str = "qwen-flash"
+    intel_llm_provider: str = "dashscope"
+    intel_llm_model: str = "qwen-plus"
 
     embedding_model: str = "text-embedding-v4"
     embedding_dims: int = 1024

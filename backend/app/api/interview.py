@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
 from app.agents.interview_graph import STREAMING_NODES, get_interview_graph
-from app.tools import profile_store
+from app.tools import profile_store, weakness_cluster
 from app.utils.sse import iter_stream_events, sse_frame
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
@@ -52,6 +52,18 @@ async def create_session(body: CreateSessionBody) -> dict:
 @router.get("/sessions")
 async def list_sessions(user_id: str = DEFAULT_USER) -> list[dict]:
     return profile_store.list_sessions(user_id)
+
+
+@router.get("/stats")
+async def interview_stats(user_id: str = DEFAULT_USER) -> dict:
+    """战绩归档：历次面试的总览 / 趋势（只读 DB，零 LLM，秒回）。"""
+    return profile_store.get_interview_stats(user_id)
+
+
+@router.get("/weakness-clusters")
+async def weakness_clusters(user_id: str = DEFAULT_USER) -> dict:
+    """跨场弱点聚类：首次/新面试后由 qwen-flash 归并，其余走内存缓存。"""
+    return await weakness_cluster.get_clusters(user_id)
 
 
 @router.get("/sessions/{sid}")

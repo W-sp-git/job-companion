@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 
 import { api } from "@/api/client";
 import type { MemoryItem } from "@/api/types";
-import { Badge, Button, Card, Field, inputCls } from "@/components/ui";
+import StatsPanel from "@/components/StatsPanel";
+import { Badge, Button, Card, Field, Stamp, inputCls } from "@/components/ui";
 
 const PROFILE_FIELDS: { key: string; label: string; placeholder: string }[] = [
   { key: "school", label: "学校", placeholder: "如：某某大学" },
@@ -64,13 +65,24 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-      <Card className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold">我的档案</h2>
-          <p className="text-xs text-neutral-500 mt-1">档案会写入长期记忆：面试出题与简历优化都会参考它。</p>
+    <div className="grid lg:grid-cols-2 gap-7 max-w-5xl mx-auto">
+      {/* ============ 人事档案卡 ============ */}
+      <Card
+        className="p-6 space-y-5 animate-ink-up"
+        tapeClass="left-1/2 -translate-x-1/2 -top-2.5 w-24 rotate-[-2deg]"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="eyebrow mb-2">Dossier Card · 人事档案</div>
+            <h2 className="font-display text-2xl font-black tracking-wide">我的档案</h2>
+          </div>
+          <Stamp size="md" className="shrink-0">档案</Stamp>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <p className="font-kai text-xs text-ink-soft leading-5 border-b border-rule pb-4">
+          档案会写入长期记忆：面试出题与简历优化都会参考它。
+        </p>
+
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5">
           {PROFILE_FIELDS.map((f) => (
             <Field key={f.key} label={f.label}>
               <input
@@ -82,34 +94,45 @@ export default function ProfilePage() {
             </Field>
           ))}
         </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={save} disabled={saving}>
+
+        <div className="flex items-center gap-4 pt-1">
+          <Button className="tracking-[0.2em]" onClick={save} disabled={saving}>
             {saving ? "保存中…" : "保存档案"}
           </Button>
-          {saved && <span className="text-sm text-emerald-400">已保存，记忆同步中…</span>}
+          {saved && <span className="font-kai text-sm text-moss animate-pop-in">已保存，记忆同步中…</span>}
         </div>
       </Card>
 
-      <Card className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">长期记忆</h2>
-            <p className="text-xs text-neutral-500 mt-1">跨会话生效；可删除单条。</p>
+      {/* ============ 记忆索引卡 ============ */}
+      <Card className="p-6 space-y-4 animate-ink-up [animation-delay:90ms]">
+        <div className="flex items-end justify-between border-b-2 border-ink pb-2">
+          <h2 className="font-display text-xl font-black tracking-wide">长期记忆</h2>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline font-mono text-[10px] tracking-[0.22em] text-ink-faint">
+              MEMORY INDEX
+            </span>
+            <Button variant="ghost" className="px-2.5 py-1 text-xs" onClick={refreshMemories} disabled={loadingMem}>
+              {loadingMem ? "刷新中…" : "刷新"}
+            </Button>
           </div>
-          <Button variant="ghost" onClick={refreshMemories} disabled={loadingMem}>
-            {loadingMem ? "刷新中…" : "刷新"}
-          </Button>
         </div>
-        <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+        <p className="font-kai text-xs text-ink-soft">跨会话生效；可删除单条。</p>
+
+        <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1 stagger">
           {memories.map((m) => {
             const t = String((m.metadata?.type as string) ?? "general");
             const meta = TYPE_META[t] ?? TYPE_META.general;
             return (
-              <div key={m.id} className="flex items-start gap-2 rounded-lg border border-neutral-800 p-3 text-sm">
-                <Badge tone={meta.tone}>{meta.label}</Badge>
-                <span className="flex-1 leading-snug">{m.memory}</span>
+              <div
+                key={m.id}
+                className="flex items-start gap-3 border border-rule-strong bg-sheet-bright rounded-[2px] p-3 text-sm transition-shadow duration-150 hover:shadow-print"
+              >
+                <Badge tone={meta.tone} className="shrink-0 mt-0.5">
+                  {meta.label}
+                </Badge>
+                <span className="flex-1 leading-6">{m.memory}</span>
                 <button
-                  className="text-neutral-500 hover:text-red-400 text-xs shrink-0"
+                  className="font-mono text-[10px] tracking-[0.14em] text-ink-faint hover:text-seal transition-colors shrink-0 mt-1"
                   onClick={() => removeMemory(m.id)}
                 >
                   删除
@@ -118,10 +141,13 @@ export default function ProfilePage() {
             );
           })}
           {!memories.length && !loadingMem && (
-            <p className="text-sm text-neutral-500">暂无记忆：去聊一场面试或保存档案试试。</p>
+            <p className="font-kai text-sm text-ink-faint">暂无记忆：去聊一场面试或保存档案试试。</p>
           )}
         </div>
       </Card>
+
+      {/* ============ 战绩归档卡 ============ */}
+      <StatsPanel />
     </div>
   );
 }

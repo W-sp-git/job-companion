@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, Field
@@ -165,3 +166,93 @@ class InterviewReport(BaseModel):
     per_question: QaReviews = Field(default_factory=list)
     improvement_plan: StrList = Field(default_factory=list)
     recommended_practice: StrList = Field(default_factory=list)
+
+
+# ---------- 跨场弱点聚类 ----------
+
+class WeaknessTheme(BaseModel):
+    theme: str = ""
+    count: int = 0
+    last_seen: str = ""
+
+
+class WeaknessClusters(BaseModel):
+    themes: Annotated[list[WeaknessTheme], BeforeValidator(_model_list)] = Field(default_factory=list)
+
+
+# ---------- 公司背调 ----------
+
+_SID_RE = re.compile(r"\d+")
+
+
+def _sid_list(v: object) -> object:
+    """证据编号容错：LLM 常输出 "S3" / "S3,S5" / 3 / [1,2] 等形态。"""
+    if v is None:
+        return []
+    if isinstance(v, bool):
+        return []
+    if isinstance(v, (int, float)):
+        return [int(v)]
+    if isinstance(v, str):
+        return [int(m) for m in _SID_RE.findall(v)]
+    if isinstance(v, list):
+        out: list[int] = []
+        for item in v:
+            if isinstance(item, bool):
+                continue
+            if isinstance(item, (int, float)):
+                out.append(int(item))
+            elif isinstance(item, str):
+                out += [int(m) for m in _SID_RE.findall(item)]
+        return out
+    return []
+
+
+SourceIds = Annotated[list[int], BeforeValidator(_sid_list)]
+
+
+class SourcedClaim(BaseModel):
+    text: str = ""
+    source_ids: SourceIds = Field(default_factory=list)
+
+
+class HiringSignal(BaseModel):
+    position: str = ""
+    location: str = ""
+    trend: str = ""
+    source_ids: SourceIds = Field(default_factory=list)
+
+
+class SalaryItem(BaseModel):
+    role_hint: str = ""
+    range_text: str = ""
+    notes: str = ""
+    source_ids: SourceIds = Field(default_factory=list)
+
+
+class InterviewStageItem(BaseModel):
+    stage: str = ""
+    detail: str = ""
+    source_ids: SourceIds = Field(default_factory=list)
+
+
+class RiskSignal(BaseModel):
+    """category ∈ 裁员缩编 / 经营负面 / 加班文化 / 劳动纠纷 / 其他。"""
+
+    category: str = ""
+    text: str = ""
+    source_ids: SourceIds = Field(default_factory=list)
+
+
+class IntelReport(BaseModel):
+    company: str = ""
+    target_role: str = ""
+    summary: str = ""
+    summary_source_ids: SourceIds = Field(default_factory=list)
+    basics: Annotated[list[SourcedClaim], BeforeValidator(_model_list)] = Field(default_factory=list)
+    hiring: Annotated[list[HiringSignal], BeforeValidator(_model_list)] = Field(default_factory=list)
+    salary: Annotated[list[SalaryItem], BeforeValidator(_model_list)] = Field(default_factory=list)
+    process: Annotated[list[InterviewStageItem], BeforeValidator(_model_list)] = Field(
+        default_factory=list
+    )
+    risks: Annotated[list[RiskSignal], BeforeValidator(_model_list)] = Field(default_factory=list)
