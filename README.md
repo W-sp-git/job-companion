@@ -1,22 +1,50 @@
-# 求职搭子 · 大学生求职全能智能体
+<div align="center">
 
-AI 求职助手：多轮模拟面试 · 简历解析与优化 · 公司背景调研 · 长期记忆。
-FastAPI + React 全栈，LangGraph 双状态图编排，多家大模型按任务路由，SSE 流式输出。
+<h1>🎯 求职搭子 · Job Companion</h1>
 
-## 功能一览
+<p><b>大学生求职全能智能体</b></p>
 
-| 功能 | 说明 |
-|---|---|
-| 模拟面试官 | 4 种模式（行为 / 技术 / 项目深挖 / 压力），开场播报面试契约、动态追问（每题至多 2 层）、逐题自动评分、结束后生成复盘报告（五维雷达 + 逐题"更优答法" + 改进行动） |
-| 简历解析 | PDF 文本层自动识别；扫描件 / 手机照片走 Qwen 视觉模型；图片直接识别。解析结果忠实原文，不加工 |
-| 简历优化 | 起草者-审查者双模型独立评审 → 修订循环；ATS 关键词对齐；**绝不虚构**（技能 / 单位 / 量化数字必须有原文依据，JD 要求但本人没有的诚实标注为"待补齐"）；导出 .docx（中文安全） |
-| 公司调研 | 模拟面试开场与简历评审时真实联网搜索公司岗位要求 / 面经（Tavily，可插拔 博查 / 智谱） |
-| 长期记忆 | Mem0 + Qdrant 本地向量库：自动提取并记住学生背景、目标岗位、面试弱点；跨会话在出题与简历优化中生效；记忆管理页可查看 / 删除 |
-| 会话恢复 | 面试进度持久化（LangGraph checkpointer），断线 / 刷新后聊天记录与报告完整恢复；点"停止生成"后本轮仍在后台跑完并落库 |
-| 战绩归档 | 档案页自动汇总历次面试：总分 / 单维度趋势曲线（可切换指标）、逐场归档台账；qwen-flash 跨场归并「能力短板主题」并统计复现次数（按场次指纹缓存，仅新面试后重算） |
-| 公司背调 | 「情报处」页：4 路并行联网检索（招聘动态 / 薪资待遇 / 面试流程 / 风险信号）→ LLM 结构化抽取 + **确定性防虚构校验**（薪资数字必须对回搜索原文，无来源的风险信号直接剔除）→ SSE 进度流 → 存档可回看；每条结论附公开来源，情报可一键带入模拟面试 |
+<p>多轮模拟面试 · 简历解析与优化 · 公司背调 · 长期记忆</p>
 
-## 架构
+<p>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
+<img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python">
+<img src="https://img.shields.io/badge/Node-%E2%89%A520-339933?logo=nodedotjs&logoColor=white" alt="Node">
+<img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React">
+<img src="https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+<img src="https://img.shields.io/badge/LangGraph-0.2%2B-1C3C3C?logo=langchain&logoColor=white" alt="LangGraph">
+<img src="https://img.shields.io/badge/LLM-%E5%A4%9A%E5%8E%82%E5%95%86%E8%B7%AF%E7%94%B1-6E56CF" alt="LLM">
+</p>
+
+<p>FastAPI + React 全栈 ｜ LangGraph 双状态图编排 ｜ 多家大模型按任务路由 ｜ SSE 流式输出</p>
+
+</div>
+
+---
+
+> 面试没把握？简历没人改？公司底细不清楚？
+> 把「模拟面试官 + 简历教练 + 情报员」塞进一个对话式智能体 —— 面试前该准备的，一次过一遍。
+
+## ✨ 功能一览
+
+- 🎤 **模拟面试官** —— 4 种模式（行为 / 技术 / 项目深挖 / 压力），开场播报面试契约、动态追问（每题至多 2 层）、逐题自动评分，结束后生成复盘报告（五维雷达 + 逐题「更优答法」+ 改进行动）
+- 📄 **简历解析** —— PDF 文本层自动识别；扫描件 / 手机照片走 Qwen 视觉模型；图片直接识别。解析结果忠实原文，不加工
+- ✍️ **简历优化** —— 起草者-审查者双模型独立评审 → 修订循环；ATS 关键词对齐；**绝不虚构**（技能 / 单位 / 量化数字必须有原文依据，JD 要求但本人没有的诚实标注为「待补齐」）；导出 .docx（中文安全）
+- 🏢 **公司调研** —— 模拟面试开场与简历评审时真实联网搜索公司岗位要求 / 面经（Tavily，可插拔博查 / 智谱）
+- 🧠 **长期记忆** —— Mem0 + Qdrant 本地向量库：自动提取并记住学生背景、目标岗位、面试弱点；跨会话在出题与简历优化中生效；记忆管理页可查看 / 删除
+- 🔄 **会话恢复** —— 面试进度持久化（LangGraph checkpointer），断线 / 刷新后聊天记录与报告完整恢复；点「停止生成」后本轮仍在后台跑完并落库
+- 📊 **战绩归档** —— 档案页自动汇总历次面试：总分 / 单维度趋势曲线（可切换指标）、逐场归档台账；qwen-flash 跨场归并「能力短板主题」并统计复现次数（按场次指纹缓存，仅新面试后重算）
+- 🕵️ **公司背调** —— 「情报处」页：4 路并行联网检索（招聘动态 / 薪资待遇 / 面试流程 / 风险信号）→ LLM 结构化抽取 + **确定性防虚构校验**（薪资数字必须对回搜索原文，无来源的风险信号直接剔除）→ SSE 进度流 → 存档可回看；每条结论附公开来源，情报可一键带入模拟面试
+
+## 🖼 界面预览
+
+### 首页
+
+<p align="center">
+  <img src="docs/screenshot-home.png" alt="求职搭子 · 首页" width="880">
+</p>
+
+## 🏗 架构
 
 ```mermaid
 flowchart TB
@@ -36,30 +64,38 @@ flowchart TB
   LLM --> ZP[智谱 GLM: 独立评审]
 ```
 
-**面试状态图**（`backend/app/agents/interview_graph.py`）：
-`START → route_turn → opening | evaluate_answer | report`；`evaluate_answer → after_evaluate → probe | next_question | report`。
-两个路由函数是纯函数，可无 API Key 单测（`tests/test_interview_routing.py`）。
+**面试状态图**（[`backend/app/agents/interview_graph.py`](backend/app/agents/interview_graph.py)）
 
-**简历优化图**（`backend/app/agents/resume_graph.py`）：
-`draft → review → (refine → review)* → finalize`，最多 2 轮修订。
+```
+START → route_turn → opening | evaluate_answer | report
+evaluate_answer → after_evaluate → probe | next_question | report
+```
 
-## 技术决策（为什么这么选）
+两个路由函数是纯函数，可无 API Key 单测（[`backend/tests/test_interview_routing.py`](backend/tests/test_interview_routing.py)）。
+
+**简历优化图**（[`backend/app/agents/resume_graph.py`](backend/app/agents/resume_graph.py)）
+
+```
+draft → review → (refine → review)* → finalize      # 最多 2 轮修订
+```
+
+## 🧭 技术决策（为什么这么选）
 
 | 决策 | 理由 |
 |---|---|
 | **LangGraph** 而非手写 ReAct | 面试本质是确定性状态机（追问分支 / 轮次上限 / 强制出报告），条件边可断言可测试；checkpointer 免费拿到断点续聊；`astream` 多模式一次拿到 token 流 + 自定义事件 + 节点进度 |
-| **Mem0** 而非自己写向量检索 | 难的不是检索而是"提取与更新"：哪些值得长期记、目标变了要覆盖、同义去重。封装为 `MemoryManager` 接口，框架可替换 |
+| **Mem0** 而非自己写向量检索 | 难的不是检索而是「提取与更新」：哪些值得长期记、目标变了要覆盖、同义去重。封装为 `MemoryManager` 接口，框架可替换 |
 | **起草者-审查者分离** | 审查节点用**不同厂商模型**（GLM）+ 全新上下文，保证视角独立；比单模型自审更能发现弱表述与虚构 |
 | **三层防虚构** | ① 起草 prompt 硬规则 ② 确定性守卫（技能 / 单位 / 项目名 / **量化数字** 逐项对原文验证，零 LLM 成本）③ 独立评审员 LLM 复查 |
-| 按任务路由模型 | 每类任务独立 `.env` 配置（见下），换模型一行切换：面试官要流式快模型、评分要严格低价、审查要换厂商、OCR 必须有视觉 |
-| OCR 双路线 | 文本层便宜快速；扫描件 / 双栏 / CID 乱码自动切 Qwen-VL 渲染识别（页图 → 转写 → 结构化 JSON） |
-| SSE 用 fetch 手写解析 | EventSource 只支持 GET、不能带请求体；前端 `src/api/sse.ts` 手写分帧解析，支持"停止生成"（AbortController） |
-| 背调用确定性校验而非模型自评 | 薪资 / 规模等数字类事实由代码做「单位折算 + 全量比对」（2万 == 20k == 20000）；风险信号无公开来源直接剔除——合规与可信度靠规则兜底，而非让模型"自我保证" |
-| 断连后台续跑 | 图在独立任务执行 + 队列转发：客户端断开时本轮仍完整执行并提交状态，不会出现"开场跑一半" |
+| **按任务路由模型** | 每类任务独立 `.env` 配置（见下），换模型一行切换：面试官要流式快模型、评分要严格低价、审查要换厂商、OCR 必须有视觉 |
+| **OCR 双路线** | 文本层便宜快速；扫描件 / 双栏 / CID 乱码自动切 Qwen-VL 渲染识别（页图 → 转写 → 结构化 JSON） |
+| **SSE 用 fetch 手写解析** | EventSource 只支持 GET、不能带请求体；前端 [`src/api/sse.ts`](frontend/src/api/sse.ts) 手写分帧解析，支持「停止生成」（AbortController） |
+| **背调用确定性校验而非模型自评** | 薪资 / 规模等数字类事实由代码做「单位折算 + 全量比对」（2万 == 20k == 20000）；风险信号无公开来源直接剔除 —— 合规与可信度靠规则兜底，而非让模型「自我保证」 |
+| **断连后台续跑** | 图在独立任务执行 + 队列转发：客户端断开时本轮仍完整执行并提交状态，不会出现「开场跑一半」 |
 
-## 快速开始
+## 🚀 快速开始
 
-前置：Python ≥ 3.11、[uv](https://docs.astral.sh/uv/)、Node ≥ 20；DeepSeek / DashScope（通义）/ 智谱 / Tavily 的 API Key。
+**前置**：Python ≥ 3.11、[uv](https://docs.astral.sh/uv/)、Node ≥ 20，以及 DeepSeek / DashScope（通义）/ 智谱 / Tavily 的 API Key。
 
 ```bash
 # 1) 后端
@@ -77,7 +113,7 @@ npm run dev                   # http://localhost:5173（/api 已代理到 8010�
 
 仓库根目录也提供命令：`make dev-backend` / `make dev-frontend` / `make ping` / `make test`。
 
-### 模型路由（backend/.env）
+### 模型路由（`backend/.env`）
 
 | 任务 | 默认 | 说明 |
 |---|---|---|
@@ -90,7 +126,7 @@ npm run dev                   # http://localhost:5173（/api 已代理到 8010�
 | embedding | dashscope / text-embedding-v4（1024 维） | 中文语义检索 |
 | search | tavily | 备选：bocha / zhipu |
 
-## 验证与测试
+## ✅ 验证与测试
 
 ```bash
 cd backend
@@ -110,7 +146,7 @@ node scripts/e2e_interview.mjs   # 面试：流式 / 评分 / 报告 / 刷新恢
 node scripts/e2e_resume.mjs      # 简历：解析 / 优化 / 下载 docx / 版本对比
 ```
 
-## 目录结构
+## 📁 目录结构
 
 ```
 backend/
@@ -132,15 +168,26 @@ frontend/
   scripts/         # playwright 端到端脚本（驱动本机 Edge/Chrome）
 ```
 
-## 成本参考
+## 💰 成本参考
 
-一场 8 题面试（含追问与复盘）约 15-20 次模型调用，按默认配置 **< 0.5 元**；一次简历优化（含 2 轮评审修订）约 8-12 次调用，**< 0.5 元**；一次公司背调 = 4 次搜索 + 1 次 qwen-plus，约 **1-2 分钱**；记忆提取使用 qwen-flash 可忽略不计。
+| 场景 | 模型调用 | 预估成本 |
+|---|---|---|
+| 一场 8 题面试（含追问与复盘） | 15–20 次 | **< 0.5 元** |
+| 一次简历优化（含 2 轮评审修订） | 8–12 次 | **< 0.5 元** |
+| 一次公司背调（4 次搜索 + 1 次 qwen-plus） | 5 次 | **1–2 分钱** |
+| 记忆提取（qwen-flash） | 高频 | 可忽略不计 |
 
-## 这个项目怎么讲（简历 / 面试）
+## 🎓 这个项目怎么讲（简历 / 面试）
 
-1. **多 Agent 协作**：面试状态机（条件边路由可单测）+ 简历"起草者-审查者-修订者"循环（跨厂商模型独立评审）
-2. **长期记忆机制**：Mem0 的三读三写时机设计（开场注入弱点、每轮回答后台提取、报告后写入弱点记忆），记忆管理页可查看/删除
+1. **多 Agent 协作**：面试状态机（条件边路由可单测）+ 简历「起草者-审查者-修订者」循环（跨厂商模型独立评审）
+2. **长期记忆机制**：Mem0 的三读三写时机设计（开场注入弱点、每轮回答后台提取、报告后写入弱点记忆），记忆管理页可查看 / 删除
 3. **可靠性工程**：LLM 结构化输出三层降级（`with_structured_output → json_mode → json_repair + 校验重试`）；防虚构三层守卫；SSE 断连后台续跑
 4. **流式体验**：LangGraph `astream` 多模式 → SSE 事件协议（token / stage / score / report），前端手写 SSE 解析器支持中断与恢复
 5. **多源情报管道**：4 路并发检索（单路失败隔离 + 瞬时重试）→ 结构化抽取 → 确定性防虚构校验（数字折算比对 / 无来源风险剔除 / 核要句级清洗）→ SSE 进度事件 → 落库存档（客户端断开照跑完）
 6. **工程细节**：多模型按任务路由（一行切换 provider）、SQLite WAL + checkpointer 断点续聊、docx 中文字体安全导出、上传与并发保护（409 / 锁）
+
+## 📜 License
+
+本项目基于 **Apache License 2.0** 开源 —— 详见 [LICENSE](LICENSE)。
+
+> ⚠️ **依赖提示**：PDF 解析使用 [PyMuPDF](https://github.com/pymupdf/PyMuPDF)（**AGPL-3.0 / 商业双许可**）。本开源项目合规使用；若用于**闭源商业产品**，请替换为 `pypdf` / `pdfplumber`，或向 Artifex 获取商业许可。
