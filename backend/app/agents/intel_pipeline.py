@@ -32,7 +32,13 @@ async def run_intel_report(
             await emit({"stage": "failed", "label": "未检索到任何公开来源，无法生成情报（可稍后重试）"})
             return
 
-        await emit({"stage": "extract", "label": f"已收集 {len(evidence)} 条来源，正在结构化抽取…"})
+        await emit(
+            {
+                "stage": "extract",
+                "count": len(evidence),
+                "label": f"已收集 {len(evidence)} 条来源，正在结构化抽取…",
+            }
+        )
         llm = get_llm("intel", temperature=0.1)
         report = await call_structured(
             llm,

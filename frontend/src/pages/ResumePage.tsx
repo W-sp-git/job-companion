@@ -5,6 +5,8 @@ import { createSSEStream } from "@/api/sse";
 import type { ResumeDraft, ResumeRaw, ResumeVersion, ReviewReport } from "@/api/types";
 import VersionDiff from "@/components/VersionDiff";
 import { Badge, Button, Card, Field, Spinner, Stamp, inputBoxCls, inputCls } from "@/components/ui";
+import { stageLabel, useT } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
 
 const SEVERITY_TONE: Record<string, "red" | "amber" | "neutral"> = {
   high: "red",
@@ -32,6 +34,7 @@ function DraftHeading({ children }: { children: string }) {
 }
 
 export default function ResumePage() {
+  const { t } = useT();
   const [uploading, setUploading] = useState(false);
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [raw, setRaw] = useState<ResumeRaw | null>(null);
@@ -89,13 +92,13 @@ export default function ResumePage() {
       {
         onEvent: (event, data) => {
           const d = data as Record<string, unknown>;
-          if (event === "stage") setStages((s) => [...s, String(d.label ?? "")]);
+          if (event === "stage") setStages((s) => [...s, stageLabel(d)]);
           else if (event === "result") {
             setDraft(d.draft as ResumeDraft);
             setReview((d.review as ReviewReport) ?? null);
             setReviewHistory((d.review_history as ReviewReport[]) ?? []);
             setDownloadUrl(String(d.download_url ?? ""));
-          } else if (event === "error") setError(String(d.message ?? "优化失败"));
+          } else if (event === "error") setError(String(d.message ?? t("resume.error.optimize")));
           else if (event === "done") setOptimizing(false);
         },
         onClose: () => setOptimizing(false),
@@ -122,6 +125,12 @@ export default function ResumePage() {
     setDiffTarget({ current: v, previous });
   }
 
+  function severityLabel(severity: string): string {
+    const key = `resume.review.severity.${severity}` as MessageKey;
+    const label = t(key);
+    return label === key ? severity : label;
+  }
+
   const firstReview = reviewHistory[0] ?? null;
   const displayIssues = (review?.issues?.length ? review.issues : firstReview?.issues) ?? [];
   const displayAtsMissing = (review?.ats_missing?.length ? review.ats_missing : firstReview?.ats_missing) ?? [];
@@ -136,14 +145,12 @@ export default function ResumePage() {
       <Card className="p-5 space-y-4 animate-ink-up">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="eyebrow mb-2">Resume Intake · 投递口</div>
-            <h2 className="font-display text-2xl font-black tracking-wide">简历解析</h2>
-            <p className="font-kai text-xs text-ink-soft mt-2 leading-5">
-              支持 PDF（文本层自动识别；扫描件/照片走视觉模型）与图片；解析结果忠实原文，不加工。
-            </p>
+            <div className="eyebrow mb-2">{t("resume.intake.eyebrow")}</div>
+            <h2 className="font-display text-2xl font-black tracking-wide">{t("resume.intake.title")}</h2>
+            <p className="font-kai text-xs text-ink-soft mt-2 leading-5">{t("resume.intake.desc")}</p>
           </div>
           <Stamp size="md" className="hidden sm:inline-flex shrink-0">
-            解档
+            {t("resume.intake.stamp")}
           </Stamp>
         </div>
         <input
@@ -161,14 +168,14 @@ export default function ResumePage() {
           <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? (
               <>
-                <Spinner /> 解析中…
+                <Spinner /> {t("resume.intake.parsing")}
               </>
             ) : (
-              "上传简历文件"
+              t("resume.intake.upload")
             )}
           </Button>
           <span className="font-mono text-[10px] tracking-[0.18em] text-ink-faint">PDF / JPG / PNG / WEBP / TXT / MD</span>
-          {route && <Badge tone={route === "vision" ? "blue" : "green"}>解析路线：{route}</Badge>}
+          {route && <Badge tone={route === "vision" ? "blue" : "green"}>{t("resume.intake.route", { route })}</Badge>}
         </div>
         {error && <p className="font-kai text-sm text-seal">✗ {error}</p>}
       </Card>
@@ -177,29 +184,39 @@ export default function ResumePage() {
         <div className="grid lg:grid-cols-2 gap-7">
           {/* 档案摘要 */}
           <Card className="p-5 space-y-4 animate-ink-up">
-            <SectionTitle title="解析结果" sub="ARCHIVED" />
+            <SectionTitle title={t("resume.result.title")} sub="ARCHIVED" />
             <div className="space-y-4 text-sm">
               <div>
-                <p className="font-display text-2xl font-black tracking-wide">{raw.name || "未识别姓名"}</p>
+                <p className="font-display text-2xl font-black tracking-wide">
+                  {raw.name || t("resume.result.noName")}
+                </p>
                 <p className="font-mono text-[11px] text-ink-faint mt-1.5">
-                  {[raw.phone, raw.email].filter(Boolean).join("　｜　") || "无联系方式"}
+                  {[raw.phone, raw.email].filter(Boolean).join("　｜　") || t("resume.result.noContact")}
                 </p>
               </div>
               <div className="space-y-3 border-t border-rule pt-3.5 leading-6">
                 <div>
-                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">技能</span>
+                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">
+                    {t("resume.result.skills")}
+                  </span>
                   {(raw.skills || []).join("、") || "—"}
                 </div>
                 <div>
-                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">教育</span>
+                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">
+                    {t("resume.result.education")}
+                  </span>
                   {(raw.education || []).map((e) => `${e.school}${e.major ? " · " + e.major : ""}`).join("；") || "—"}
                 </div>
                 <div>
-                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">实习</span>
-                  {(raw.internships || []).map((e) => e.org || "（未识别单位）").join("；") || "—"}
+                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">
+                    {t("resume.result.internships")}
+                  </span>
+                  {(raw.internships || []).map((e) => e.org || t("resume.result.noOrg")).join("；") || "—"}
                 </div>
                 <div>
-                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">项目</span>
+                  <span className="block font-mono text-[10px] tracking-[0.2em] text-ink-faint mb-0.5">
+                    {t("resume.result.projects")}
+                  </span>
                   {(raw.projects || []).map((p) => p.name).join("；") || "—"}
                 </div>
               </div>
@@ -208,27 +225,27 @@ export default function ResumePage() {
 
           {/* 目标岗位与 JD */}
           <Card className="p-5 space-y-5 animate-ink-up [animation-delay:90ms]">
-            <SectionTitle title="目标岗位与 JD" sub="TARGETING" />
-            <Field label="目标岗位">
+            <SectionTitle title={t("resume.target.title")} sub="TARGETING" />
+            <Field label={t("resume.target.role")}>
               <input
                 className={`${inputCls} text-[15px]`}
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
               />
             </Field>
-            <Field label="公司名（可选，会真实联网调研）">
+            <Field label={t("resume.target.company")}>
               <input
                 className={`${inputCls} text-[15px]`}
-                placeholder="如：字节跳动"
+                placeholder={t("resume.target.company.placeholder")}
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
               />
             </Field>
-            <Field label="岗位 JD（可选，填了做 ATS 关键词对齐）">
+            <Field label={t("resume.target.jd")}>
               <textarea
                 className={`${inputBoxCls} resize-none font-kai text-sm leading-6`}
                 rows={4}
-                placeholder="粘贴招聘描述…"
+                placeholder={t("resume.target.jd.placeholder")}
                 value={jd}
                 onChange={(e) => setJd(e.target.value)}
               />
@@ -236,10 +253,10 @@ export default function ResumePage() {
             <Button className="w-full py-2.5 tracking-[0.2em]" onClick={optimize} disabled={optimizing}>
               {optimizing ? (
                 <>
-                  <Spinner /> 优化中（起草 → 独立评审 → 修订）…
+                  <Spinner /> {t("resume.target.optimizing")}
                 </>
               ) : (
-                "开始优化简历"
+                t("resume.target.start")
               )}
             </Button>
           </Card>
@@ -249,7 +266,7 @@ export default function ResumePage() {
       {/* 印厂流水线 */}
       {(stages.length > 0 || optimizing) && (
         <Card className="p-5 animate-ink-up">
-          <SectionTitle title="优化过程" sub="PIPELINE" />
+          <SectionTitle title={t("resume.pipeline.title")} sub="PIPELINE" />
           <div className="space-y-2">
             {stages.map((s, i) => (
               <div key={i} className="flex items-center gap-3 text-sm animate-ink-up">
@@ -262,7 +279,11 @@ export default function ResumePage() {
               <div className="flex items-center gap-3 text-sm text-ink-faint">
                 <span className="font-mono text-[11px] w-6">{String(stages.length + 1).padStart(2, "0")}</span>
                 <Spinner />
-                <span className="font-kai">{stages[stages.length - 1] ? "处理中…" : "启动中…"}</span>
+                <span className="font-kai">
+                  {stages[stages.length - 1]
+                    ? t("resume.pipeline.processing")
+                    : t("resume.pipeline.starting")}
+                </span>
               </div>
             )}
           </div>
@@ -275,12 +296,12 @@ export default function ResumePage() {
           <Card className="p-6 space-y-4 animate-ink-up">
             <div className="flex items-end justify-between gap-4 border-b-2 border-ink pb-2 mb-4">
               <div className="flex items-baseline gap-3">
-                <h3 className="font-display text-base font-bold tracking-[0.08em]">优化后简历</h3>
+                <h3 className="font-display text-base font-bold tracking-[0.08em]">{t("resume.proof.title")}</h3>
                 <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">PROOF</span>
               </div>
               {downloadUrl && (
                 <a href={downloadUrl} className="shrink-0">
-                  <Button>下载 .docx</Button>
+                  <Button>{t("resume.proof.download")}</Button>
                 </a>
               )}
             </div>
@@ -291,20 +312,22 @@ export default function ResumePage() {
                   {[draft.phone, draft.email].filter(Boolean).join("　｜　")}
                 </div>
                 {draft.target_role && (
-                  <div className="font-kai text-xs text-seal mt-1.5">求职意向：{draft.target_role}</div>
+                  <div className="font-kai text-xs text-seal mt-1.5">
+                    {t("resume.proof.intent", { role: draft.target_role })}
+                  </div>
                 )}
               </div>
 
               {draft.summary && (
                 <div>
-                  <DraftHeading>个人总结</DraftHeading>
+                  <DraftHeading>{t("resume.proof.summary")}</DraftHeading>
                   <p className="text-ink-soft leading-7">{draft.summary}</p>
                 </div>
               )}
 
               {!!draft.skills?.length && (
                 <div>
-                  <DraftHeading>专业技能</DraftHeading>
+                  <DraftHeading>{t("resume.proof.skills")}</DraftHeading>
                   {draft.skills.map((s, i) => (
                     <div key={i} className="flex gap-2 leading-7">
                       <span className="text-seal shrink-0">·</span>
@@ -316,7 +339,7 @@ export default function ResumePage() {
 
               {!!draft.internships?.length && (
                 <div>
-                  <DraftHeading>实习经历</DraftHeading>
+                  <DraftHeading>{t("resume.proof.internships")}</DraftHeading>
                   {draft.internships.map((it, i) => (
                     <div key={i} className="mb-2.5">
                       <div className="font-medium font-display">
@@ -335,7 +358,7 @@ export default function ResumePage() {
 
               {!!draft.projects?.length && (
                 <div>
-                  <DraftHeading>项目经历</DraftHeading>
+                  <DraftHeading>{t("resume.proof.projects")}</DraftHeading>
                   {draft.projects.map((p, i) => (
                     <div key={i} className="mb-2.5">
                       <div className="font-medium font-display">
@@ -355,7 +378,7 @@ export default function ResumePage() {
               {!!draft.target_gaps?.length && (
                 <div className="annotate rounded-[2px] p-3">
                   <span className="font-mono text-[10px] tracking-[0.18em] text-seal font-bold">
-                    待补齐（JD 要求但暂未具备，诚实标注）
+                    {t("resume.proof.gaps")}
                   </span>
                   <div className="mt-1.5 font-kai text-xs leading-6 text-ink-soft">
                     {draft.target_gaps.join("、")}
@@ -369,9 +392,9 @@ export default function ResumePage() {
             {/* 独立评审意见（红笔批注） */}
             {review && (
               <Card className="p-5 space-y-4 animate-ink-up">
-                <SectionTitle title="独立评审意见" sub="REVIEW" />
+                <SectionTitle title={t("resume.review.title")} sub="REVIEW" />
                 {showingFirstRound && (
-                  <p className="font-kai text-xs text-ink-faint">以下为首轮评审发现的问题，已由修订循环处理：</p>
+                  <p className="font-kai text-xs text-ink-faint">{t("resume.review.firstRound")}</p>
                 )}
                 {review.overall && (
                   <p className="font-kai text-xs leading-6 text-ink-soft border-l-2 border-rule-strong pl-3">
@@ -382,7 +405,9 @@ export default function ResumePage() {
                   {displayIssues.map((issue, i) => (
                     <div key={i} className="border border-rule-strong bg-sheet-bright rounded-[2px] p-3 text-xs space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <Badge tone={SEVERITY_TONE[issue.severity] ?? "neutral"}>{issue.severity}</Badge>
+                        <Badge tone={SEVERITY_TONE[issue.severity] ?? "neutral"}>
+                          {severityLabel(issue.severity)}
+                        </Badge>
                         <span className="font-mono text-[10px] text-ink-faint truncate">{issue.location}</span>
                       </div>
                       <p className="text-ink leading-5">{issue.problem}</p>
@@ -391,9 +416,13 @@ export default function ResumePage() {
                   ))}
                 </div>
                 <div className="text-xs text-ink-faint pt-3 border-t border-rule space-y-1.5 font-kai">
-                  {!!displayAtsMissing.length && <p>ATS 缺失关键词：{displayAtsMissing.join("、")}</p>}
+                  {!!displayAtsMissing.length && (
+                    <p>{t("resume.review.atsMissing", { list: displayAtsMissing.join("、") })}</p>
+                  )}
                   {!!displayViolations.length && (
-                    <p className="text-seal">防虚构拦截：{displayViolations.map((v) => v.value).join("、")}</p>
+                    <p className="text-seal">
+                      {t("resume.review.factuality", { list: displayViolations.map((v) => v.value).join("、") })}
+                    </p>
                   )}
                 </div>
               </Card>
@@ -402,7 +431,7 @@ export default function ResumePage() {
             {/* 历史版本台账 */}
             {versions.length > 0 && (
               <Card className="p-5 space-y-3 animate-ink-up [animation-delay:90ms]">
-                <SectionTitle title="历史版本" sub="VERSIONS" />
+                <SectionTitle title={t("resume.versions.title")} sub="VERSIONS" />
                 {versions.map((v) => (
                   <div
                     key={v.id}
@@ -413,13 +442,13 @@ export default function ResumePage() {
                     </span>
                     <span className="flex items-center gap-3 shrink-0">
                       <button className="text-seal hover:underline underline-offset-2" onClick={() => openDiff(v)}>
-                        对比
+                        {t("resume.versions.diff")}
                       </button>
                       <a
                         className="text-ink-soft hover:text-ink hover:underline underline-offset-2 font-mono"
                         href={`/api/resume-versions/${v.id}/docx`}
                       >
-                        下载
+                        {t("resume.versions.download")}
                       </a>
                     </span>
                   </div>

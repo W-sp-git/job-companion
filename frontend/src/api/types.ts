@@ -229,10 +229,3 @@ export type IntelReportMeta = {
   created_at: string;
   finished_at: string | null;
 };
-
-export const MODE_LABELS: Record<string, string> = {
-  behavioral: "行为面试",
-  technical: "技术面试",
-  project: "项目深挖",
-  pressure: "压力面试",
-};

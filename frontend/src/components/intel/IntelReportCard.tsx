@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 
 import type { IntelReportPayload, IntelSource } from "@/api/types";
 import { Badge, Button, Card, Stamp } from "@/components/ui";
+import { useT } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
 
 function hostOf(url: string): string {
   try {
@@ -30,21 +32,20 @@ function RefChips({ sources }: { sources: IntelSource[] }) {
 }
 
 function UnverifiedBadge({ status }: { status: string }) {
+  const { t } = useT();
   if (status !== "unverified") return null;
   return (
     <Badge tone="amber" className="shrink-0">
-      未经佐证
+      {t("intel.brief.unverified")}
     </Badge>
   );
 }
 
-function SectionTitle({ no, title, en }: { no: string; title: string; en: string }) {
+function SectionTitle({ titleKey, en }: { titleKey: MessageKey; en: string }) {
+  const { t } = useT();
   return (
     <div className="flex items-end justify-between border-b border-ink pb-1.5 mb-3">
-      <span className="font-display text-sm font-bold tracking-[0.1em]">
-        <span className="font-latin text-seal mr-1.5">{no}</span>
-        {title}
-      </span>
+      <span className="font-display text-sm font-bold tracking-[0.1em]">{t(titleKey)}</span>
       <span className="font-mono text-[9px] tracking-[0.22em] text-ink-faint">{en}</span>
     </div>
   );
@@ -61,6 +62,7 @@ export default function IntelReportCard({
   payload: IntelReportPayload;
   onNew: () => void;
 }) {
+  const { t } = useT();
   const navigate = useNavigate();
   const { report, verification, sources, company, target_role, report_id, created_at } = payload;
   const dateStr = created_at ? created_at.slice(0, 10).replace(/-/g, "") : "00000000";
@@ -71,37 +73,38 @@ export default function IntelReportCard({
       {/* 刊头 */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="eyebrow mb-2">Intelligence Brief · 情报简报</div>
+          <div className="eyebrow mb-2">{t("intel.brief.eyebrow")}</div>
           <h2 className="font-display text-2xl font-black tracking-wide truncate">{company}</h2>
           <div className="font-mono text-[10px] tracking-[0.14em] text-ink-faint mt-2 space-x-3">
-            <span>
-              NO. INTEL-{dateStr}-{String(report_id).padStart(3, "0")}
-            </span>
-            {target_role && <span>岗位 {target_role}</span>}
-            <span>来源 {sources.length} 条</span>
+            <span>{t("intel.brief.no", { date: dateStr, id: String(report_id).padStart(3, "0") })}</span>
+            {target_role && <span>{t("intel.brief.role", { role: target_role })}</span>}
+            <span>{t("intel.brief.sources", { n: sources.length })}</span>
           </div>
         </div>
         <Stamp size="lg" className="shrink-0">
-          情报
+          {t("intel.brief.stamp")}
         </Stamp>
       </div>
 
       {/* 核要 */}
       <div className="border border-rule-strong bg-sheet-bright rounded-[2px] p-4">
         <p className="font-kai text-sm leading-7">
-          {report.summary || "（核要生成失败）"}
+          {report.summary || t("intel.brief.summaryEmpty")}
           <RefChips sources={report.summary_sources} />
         </p>
         <div className="flex items-center pt-2.5 mt-2.5 border-t border-dotted border-rule-strong">
           <Badge tone={coveragePct >= 90 ? "green" : "amber"}>
-            防虚构校验 {verification.verified}/{verification.total_claims} 条有公开来源佐证
+            {t("intel.brief.verified", {
+              ok: verification.verified,
+              total: verification.total_claims,
+            })}
           </Badge>
         </div>
       </div>
 
       {/* 一 · 基本面 */}
       <section>
-        <SectionTitle no="一" title="公司基本面" en="BASICS" />
+        <SectionTitle titleKey="intel.brief.s1" en="BASICS" />
         <div className="space-y-2.5">
           {report.basics.map((b, i) => (
             <div
@@ -116,13 +119,13 @@ export default function IntelReportCard({
               <UnverifiedBadge status={b.status} />
             </div>
           ))}
-          {!report.basics.length && <EmptyNote text="未找到可靠的公司基本面信息。" />}
+          {!report.basics.length && <EmptyNote text={t("intel.brief.noBasics")} />}
         </div>
       </section>
 
       {/* 二 · 在招岗位 */}
       <section>
-        <SectionTitle no="二" title="在招岗位与趋势" en="HIRING" />
+        <SectionTitle titleKey="intel.brief.s2" en="HIRING" />
         <div className="space-y-2">
           {report.hiring.map((h, i) => (
             <div
@@ -144,13 +147,13 @@ export default function IntelReportCard({
               )}
             </div>
           ))}
-          {!report.hiring.length && <EmptyNote text="未检索到明确的在招岗位信息。" />}
+          {!report.hiring.length && <EmptyNote text={t("intel.brief.noHiring")} />}
         </div>
       </section>
 
       {/* 三 · 薪资 */}
       <section>
-        <SectionTitle no="三" title="薪资待遇" en="SALARY" />
+        <SectionTitle titleKey="intel.brief.s3" en="SALARY" />
         <div className="space-y-3.5">
           {report.salary.map((s, i) => (
             <div key={i} className={s.status === "unverified" ? "opacity-60" : ""}>
@@ -169,13 +172,13 @@ export default function IntelReportCard({
               )}
             </div>
           ))}
-          {!report.salary.length && <EmptyNote text="公开来源中没有可引用的薪资数据。" />}
+          {!report.salary.length && <EmptyNote text={t("intel.brief.noSalary")} />}
         </div>
       </section>
 
       {/* 四 · 面试流程 */}
       <section>
-        <SectionTitle no="四" title="面试流程与真题风格" en="PROCESS" />
+        <SectionTitle titleKey="intel.brief.s4" en="PROCESS" />
         <div className="space-y-3">
           {report.process.map((p, i) => (
             <div key={i} className={`flex gap-3 ${p.status === "unverified" ? "opacity-60" : ""}`}>
@@ -194,15 +197,17 @@ export default function IntelReportCard({
               </div>
             </div>
           ))}
-          {!report.process.length && <EmptyNote text="未检索到面试流程与面经信息。" />}
+          {!report.process.length && <EmptyNote text={t("intel.brief.noProcess")} />}
         </div>
       </section>
 
       {/* 五 · 风险信号 */}
       <section className="border-l-4 border-seal bg-seal-wash/60 rounded-[2px] p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="font-display text-sm font-bold tracking-[0.1em] text-seal">五 · 风险信号</span>
-          <Stamp size="sm">红线</Stamp>
+          <span className="font-display text-sm font-bold tracking-[0.1em] text-seal">
+            {t("intel.brief.s5")}
+          </span>
+          <Stamp size="sm">{t("intel.brief.redline")}</Stamp>
         </div>
         {report.risks.length ? (
           <div className="space-y-3">
@@ -219,18 +224,16 @@ export default function IntelReportCard({
             ))}
           </div>
         ) : (
-          <p className="font-kai text-sm leading-6 text-ink-soft">
-            本次检索未发现公开负面信号（不代表该公司无相关风险）。
-          </p>
+          <p className="font-kai text-sm leading-6 text-ink-soft">{t("intel.brief.noRisk")}</p>
         )}
         <p className="font-mono text-[10px] text-ink-faint mt-3 pt-2 border-t border-seal/20">
-          本节仅为公开信息摘录，不构成任何评价或建议。
+          {t("intel.brief.disclaimer")}
         </p>
       </section>
 
       {/* 参考来源 */}
       <section>
-        <SectionTitle no="附" title="参考来源" en="SOURCES" />
+        <SectionTitle titleKey="intel.brief.appendix" en="SOURCES" />
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
           {sources.map((s) => (
             <div
@@ -260,9 +263,13 @@ export default function IntelReportCard({
       {/* 校验摘要 */}
       <div className="border-t border-rule pt-3 space-y-1.5">
         <p className="font-mono text-[10px] tracking-[0.14em] text-ink-faint">
-          防虚构校验 {verification.verified}/{verification.total_claims} 条 · 检索来源{" "}
-          {verification.evidence_total} 条
-          {verification.dropped_risk > 0 && ` · 剔除 ${verification.dropped_risk} 条无来源风险线索`}
+          {t("intel.brief.verifyLine", {
+            ok: verification.verified,
+            total: verification.total_claims,
+            evidence: verification.evidence_total,
+          })}
+          {verification.dropped_risk > 0 &&
+            t("intel.brief.verifyDropped", { n: verification.dropped_risk })}
         </p>
         {verification.notes.map((n, i) => (
           <p key={i} className="font-kai text-[11px] text-ink-faint">
@@ -280,12 +287,12 @@ export default function IntelReportCard({
             )
           }
           disabled={!target_role}
-          title={target_role ? "" : "背调时未指定岗位，无法带情报去面试"}
+          title={target_role ? "" : t("intel.brief.toInterviewHint")}
         >
-          带这份情报去模拟面试
+          {t("intel.brief.toInterview")}
         </Button>
         <Button variant="ghost" onClick={onNew}>
-          重新背调
+          {t("intel.brief.again")}
         </Button>
       </div>
     </Card>

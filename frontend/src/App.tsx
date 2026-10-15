@@ -1,20 +1,43 @@
 import { BrowserRouter, Link, NavLink, Route, Routes } from "react-router-dom";
 
+import type { MessageKey } from "@/i18n/messages";
+import { useLocaleStore, useT } from "@/i18n";
 import HomePage from "@/pages/HomePage";
 import IntelPage from "@/pages/IntelPage";
 import InterviewPage from "@/pages/InterviewPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ResumePage from "@/pages/ResumePage";
 
-const navItems = [
-  { to: "/", no: "01", label: "首页" },
-  { to: "/interview", no: "02", label: "模拟面试" },
-  { to: "/resume", no: "03", label: "简历优化" },
-  { to: "/profile", no: "04", label: "我的档案" },
-  { to: "/intel", no: "05", label: "情报处" },
+const navItems: { to: string; no: string; key: MessageKey }[] = [
+  { to: "/", no: "01", key: "nav.home" },
+  { to: "/interview", no: "02", key: "nav.interview" },
+  { to: "/resume", no: "03", key: "nav.resume" },
+  { to: "/profile", no: "04", key: "nav.profile" },
+  { to: "/intel", no: "05", key: "nav.intel" },
 ];
 
+function LocaleSwitch() {
+  const { locale, setLocale } = useLocaleStore();
+  return (
+    <div className="flex items-center gap-0.5 shrink-0 self-center border-l border-rule-strong pl-2 ml-1">
+      {(["zh", "en"] as const).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLocale(l)}
+          aria-label={`switch language to ${l}`}
+          className={`px-1.5 py-1 font-mono text-[10px] tracking-wider rounded-[2px] transition-colors ${
+            locale === l ? "text-seal font-bold" : "text-ink-faint hover:text-ink"
+          }`}
+        >
+          {l === "zh" ? "中" : "EN"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
+  const { t } = useT();
   return (
     <BrowserRouter>
       <div className="min-h-screen flex flex-col">
@@ -26,31 +49,36 @@ export default function App() {
                 搭
               </span>
               <span className="leading-tight">
-                <span className="block font-display text-[17px] font-black tracking-[0.14em]">求职搭子</span>
+                <span className="block font-display text-[17px] font-black tracking-[0.14em]">
+                  求职搭子
+                </span>
                 <span className="block font-mono text-[9px] tracking-[0.28em] text-ink-faint mt-0.5">
-                  JOB COMPANION · EST.2026
+                  {t("app.slogan")}
                 </span>
               </span>
             </Link>
-            <nav className="flex items-stretch gap-0.5 text-sm overflow-x-auto">
-              {navItems.map((n) => (
-                <NavLink
-                  key={n.to}
-                  to={n.to}
-                  end={n.to === "/"}
-                  className={({ isActive }) =>
-                    `flex items-baseline gap-1.5 px-3 py-1.5 border-b-2 whitespace-nowrap transition-colors ${
-                      isActive
-                        ? "border-seal text-seal font-semibold"
-                        : "border-transparent text-ink-soft hover:text-ink hover:border-rule-strong"
-                    }`
-                  }
-                >
-                  <span className="font-mono text-[9px] opacity-75 tracking-wider">{n.no}</span>
-                  <span>{n.label}</span>
-                </NavLink>
-              ))}
-            </nav>
+            <div className="flex items-center gap-1 min-w-0">
+              <nav className="flex items-stretch gap-0.5 text-sm overflow-x-auto">
+                {navItems.map((n) => (
+                  <NavLink
+                    key={n.to}
+                    to={n.to}
+                    end={n.to === "/"}
+                    className={({ isActive }) =>
+                      `flex items-baseline gap-1.5 px-3 py-1.5 border-b-2 whitespace-nowrap transition-colors ${
+                        isActive
+                          ? "border-seal text-seal font-semibold"
+                          : "border-transparent text-ink-soft hover:text-ink hover:border-rule-strong"
+                      }`
+                    }
+                  >
+                    <span className="font-mono text-[9px] opacity-75 tracking-wider">{n.no}</span>
+                    <span>{t(n.key)}</span>
+                  </NavLink>
+                ))}
+              </nav>
+              <LocaleSwitch />
+            </div>
           </div>
           <div className="mx-auto max-w-6xl px-6">
             <div className="rule-double" />
@@ -79,8 +107,8 @@ export default function App() {
           <div className="border-t-2 border-ink pt-[5px]">
             <div className="border-t border-rule-strong" />
             <div className="flex items-center justify-between gap-4 pt-2.5 font-mono text-[10px] tracking-[0.18em] text-ink-faint">
-              <span>求职搭子 · 大学生校招作战档案</span>
-              <span className="hidden sm:inline">LOCAL-FIRST · 数据只留在你的电脑</span>
+              <span>{t("footer.left")}</span>
+              <span className="hidden sm:inline">{t("footer.right")}</span>
             </div>
           </div>
         </footer>

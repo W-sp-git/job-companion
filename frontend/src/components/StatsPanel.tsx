@@ -10,8 +10,9 @@ import {
 } from "recharts";
 
 import { api } from "@/api/client";
-import { MODE_LABELS, type InterviewStats, type WeaknessClusters } from "@/api/types";
+import type { InterviewStats, WeaknessClusters } from "@/api/types";
 import { Badge, Card, CountNumber, Spinner, Stamp } from "@/components/ui";
+import { modeLabel, useT } from "@/i18n";
 
 const TOTAL = "__total__";
 const AXIS_FONT = "PingFang SC, Hiragino Sans GB, sans-serif";
@@ -27,18 +28,19 @@ type ChartPoint = {
   idx: string;
   day: string;
   tipDate: string;
-  modeLabel: string;
+  mode: string;
   who: string;
   value: number | null;
 };
 
 function ChartTip({ active, payload }: { active?: boolean; payload?: readonly { payload: unknown }[] }) {
+  const { t } = useT();
   if (!active || !payload?.length) return null;
   const p = payload[0].payload as ChartPoint;
   return (
     <div className="rounded-[2px] border border-rule-strong bg-sheet px-3 py-2 space-y-1 shadow-print">
       <div className="font-mono text-[10px] tracking-wider text-ink-faint">
-        {p.tipDate} · {p.modeLabel}
+        {p.tipDate} · {modeLabel(t, p.mode)}
       </div>
       <div className="flex items-baseline gap-2">
         <span className="font-latin text-xl leading-none text-seal">
@@ -50,7 +52,17 @@ function ChartTip({ active, payload }: { active?: boolean; payload?: readonly { 
   );
 }
 
-function Stat({ label, value, unit, accent = false }: { label: string; value: ReactNode; unit?: string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  unit,
+  accent = false,
+}: {
+  label: string;
+  value: ReactNode;
+  unit?: string;
+  accent?: boolean;
+}) {
   return (
     <div className="space-y-1">
       <div className="font-mono text-[10px] tracking-[0.18em] text-ink-faint">{label}</div>
@@ -62,7 +74,15 @@ function Stat({ label, value, unit, accent = false }: { label: string; value: Re
   );
 }
 
-function MetricChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+function MetricChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
@@ -76,6 +96,7 @@ function MetricChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 export default function StatsPanel() {
+  const { t } = useT();
   const [stats, setStats] = useState<InterviewStats | null>(null);
   const [clusters, setClusters] = useState<WeaknessClusters | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,15 +115,15 @@ export default function StatsPanel() {
 
   const chartData = useMemo<ChartPoint[]>(
     () =>
-      trend.map((t, i) => ({
+      trend.map((p, i) => ({
         idx: String(i + 1),
-        day: fmtDay(t.date),
-        tipDate: `${fmtDay(t.date)} ${t.date.slice(11, 16)}`,
-        modeLabel: MODE_LABELS[t.mode] ?? t.mode,
-        who: [t.target_role || "模拟面试", t.company].filter(Boolean).join(" · "),
-        value: metric === TOTAL ? t.score : (t.dimensions[metric] ?? null),
+        day: fmtDay(p.date),
+        tipDate: `${fmtDay(p.date)} ${p.date.slice(11, 16)}`,
+        mode: p.mode,
+        who: [p.target_role || t("home.recent.norole"), p.company].filter(Boolean).join(" · "),
+        value: metric === TOTAL ? p.score : (p.dimensions[metric] ?? null),
       })),
-    [trend, metric],
+    [trend, metric, t],
   );
   const dayBy = useMemo(() => new Map(chartData.map((d) => [d.idx, d.day])), [chartData]);
   const ov = stats?.overview;
@@ -111,38 +132,46 @@ export default function StatsPanel() {
     <Card className="lg:col-span-2 p-6 space-y-6 animate-ink-up [animation-delay:180ms]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="eyebrow mb-2">Battle Record · 战绩归档</div>
-          <h2 className="font-display text-2xl font-black tracking-wide">战绩归档</h2>
+          <div className="eyebrow mb-2">{t("stats.eyebrow")}</div>
+          <h2 className="font-display text-2xl font-black tracking-wide">{t("stats.title")}</h2>
         </div>
-        <Stamp size="md" className="shrink-0">战报</Stamp>
+        <Stamp size="md" className="shrink-0">
+          {t("stats.stamp")}
+        </Stamp>
       </div>
 
       {loading && (
         <div className="py-10 flex items-center justify-center gap-3 font-kai text-sm text-ink-faint">
-          <Spinner /> 正在调档…
+          <Spinner /> {t("stats.loading")}
         </div>
       )}
 
       {!loading && ov?.session_count === 0 && (
-        <p className="font-kai text-sm leading-6 text-ink-faint py-6 text-center">
-          还没有战绩：完成一场模拟面试后，这里会自动归档成绩曲线与短板清单。
-        </p>
+        <p className="font-kai text-sm leading-6 text-ink-faint py-6 text-center">{t("stats.empty")}</p>
       )}
 
       {!loading && ov && ov.session_count > 0 && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-y border-rule-strong py-4">
-            <Stat label="累计场次" value={<CountNumber value={ov.session_count} />} unit="场" />
-            <Stat label="累计答题" value={<CountNumber value={ov.question_count} />} unit="题" />
-            <Stat label="平均分" value={<CountNumber value={ov.avg_score} decimals={1} />} accent />
-            <Stat label="最高分" value={<CountNumber value={ov.best_score} decimals={1} />} accent />
+            <Stat
+              label={t("stats.sessions")}
+              value={<CountNumber value={ov.session_count} />}
+              unit={t("stats.sessions.unit")}
+            />
+            <Stat
+              label={t("stats.questions")}
+              value={<CountNumber value={ov.question_count} />}
+              unit={t("stats.questions.unit")}
+            />
+            <Stat label={t("stats.avg")} value={<CountNumber value={ov.avg_score} decimals={1} />} accent />
+            <Stat label={t("stats.best")} value={<CountNumber value={ov.best_score} decimals={1} />} accent />
           </div>
 
           <div className="grid lg:grid-cols-5 gap-7">
             <div className="lg:col-span-3 space-y-3">
               <div className="flex flex-wrap gap-1.5">
                 <MetricChip active={metric === TOTAL} onClick={() => setMetric(TOTAL)}>
-                  总分
+                  {t("stats.metric.total")}
                 </MetricChip>
                 {stats.dimension_names.map((name) => (
                   <MetricChip key={name} active={metric === name} onClick={() => setMetric(name)}>
@@ -184,38 +213,42 @@ export default function StatsPanel() {
                 </LineChart>
               </ResponsiveContainer>
               <p className="font-mono text-[10px] tracking-[0.14em] text-ink-faint">
-                {metric === TOTAL ? "总分 0-100" : "维度 0-10"} · 按面试完成时间
-                {trend.length === 1 && " · 完成第二场后即可看到趋势"}
+                {metric === TOTAL ? t("stats.scale.total") : t("stats.scale.dim")} · {t("stats.byTime")}
+                {trend.length === 1 && ` · ${t("stats.singleHint")}`}
               </p>
             </div>
 
             <div className="lg:col-span-2 space-y-3">
               <div className="flex items-baseline justify-between">
-                <span className="font-mono text-[11px] tracking-[0.16em] text-ink-soft">短板清单</span>
+                <span className="font-mono text-[11px] tracking-[0.16em] text-ink-soft">
+                  {t("stats.weakness.title")}
+                </span>
                 <span className="font-mono text-[10px] tracking-[0.14em] text-ink-faint">WEAKNESS LEDGER</span>
               </div>
               {clusters === null ? (
                 <p className="flex items-center gap-2 font-kai text-sm text-ink-faint">
-                  <Spinner /> 正在归并历次短板…
+                  <Spinner /> {t("stats.weakness.clustering")}
                 </p>
               ) : !clusters.clustered ? (
-                <p className="font-kai text-sm text-ink-faint">短板整理暂不可用，稍后刷新试试。</p>
+                <p className="font-kai text-sm text-ink-faint">{t("stats.weakness.unavailable")}</p>
               ) : clusters.themes.length === 0 ? (
-                <p className="font-kai text-sm text-ink-faint">暂无短板记录。</p>
+                <p className="font-kai text-sm text-ink-faint">{t("stats.weakness.empty")}</p>
               ) : (
                 <div className="space-y-2">
-                  {clusters.themes.slice(0, 8).map((t) => (
+                  {clusters.themes.slice(0, 8).map((theme) => (
                     <div
-                      key={t.theme}
+                      key={theme.theme}
                       className="flex items-center gap-2 border border-rule bg-sheet-bright rounded-[2px] px-2.5 py-1.5"
                     >
-                      <span className="flex-1 text-sm leading-5">{t.theme}</span>
-                      {t.count >= 2 && (
-                        <Badge tone={t.count >= 3 ? "red" : "amber"}>
-                          {t.count >= 3 ? "高频" : "复现"} ×{t.count}
+                      <span className="flex-1 text-sm leading-5">{theme.theme}</span>
+                      {theme.count >= 2 && (
+                        <Badge tone={theme.count >= 3 ? "red" : "amber"}>
+                          {theme.count >= 3 ? t("stats.weakness.high") : t("stats.weakness.recur")} ×{theme.count}
                         </Badge>
                       )}
-                      <span className="font-mono text-[10px] text-ink-faint shrink-0">{t.last_seen.slice(5)}</span>
+                      <span className="font-mono text-[10px] text-ink-faint shrink-0">
+                        {theme.last_seen.slice(5)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -225,24 +258,30 @@ export default function StatsPanel() {
 
           <div className="space-y-1">
             <div className="flex items-baseline justify-between border-b-2 border-ink pb-2">
-              <span className="font-mono text-[11px] tracking-[0.16em] text-ink-soft">逐场归档</span>
+              <span className="font-mono text-[11px] tracking-[0.16em] text-ink-soft">
+                {t("stats.archive.title")}
+              </span>
               <span className="font-mono text-[10px] tracking-[0.14em] text-ink-faint">ARCHIVE</span>
             </div>
             <div className="max-h-72 overflow-y-auto pr-1">
-              {[...trend].reverse().map((t) => (
+              {[...trend].reverse().map((p) => (
                 <div
-                  key={t.session_id}
+                  key={p.session_id}
                   className="flex items-center gap-3 border-b border-rule last:border-0 py-2.5 px-1"
                 >
-                  <span className="font-mono text-[10px] text-ink-faint w-10 shrink-0">{fmtDay(t.date)}</span>
-                  <Badge tone="blue" className="shrink-0">{MODE_LABELS[t.mode] ?? t.mode}</Badge>
+                  <span className="font-mono text-[10px] text-ink-faint w-10 shrink-0">{fmtDay(p.date)}</span>
+                  <Badge tone="blue" className="shrink-0">
+                    {modeLabel(t, p.mode)}
+                  </Badge>
                   <span className="flex-1 min-w-0 truncate text-sm">
-                    {t.target_role || "模拟面试"}
-                    {t.company && <span className="text-ink-soft"> · {t.company}</span>}
+                    {p.target_role || t("home.recent.norole")}
+                    {p.company && <span className="text-ink-soft"> · {p.company}</span>}
                   </span>
-                  <span className="font-mono text-[10px] text-ink-faint shrink-0">{t.questions} 题</span>
+                  <span className="font-mono text-[10px] text-ink-faint shrink-0">
+                    {t("stats.archive.questions", { n: p.questions })}
+                  </span>
                   <span className="font-latin text-xl leading-none text-seal w-11 text-right shrink-0">
-                    {t.score.toFixed(1)}
+                    {p.score.toFixed(1)}
                   </span>
                 </div>
               ))}

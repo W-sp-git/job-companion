@@ -1,17 +1,19 @@
+import { useT } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
 import type { LaneStatus } from "@/stores/intelStore";
 
-const LANE_ROWS = [
-  { key: "hiring", label: "招聘动态" },
-  { key: "salary", label: "薪资待遇" },
-  { key: "process", label: "面试流程" },
-  { key: "risk", label: "风险信号" },
-] as const;
+const LANE_ROWS: { key: string; labelKey: MessageKey }[] = [
+  { key: "hiring", labelKey: "intel.progress.lane.hiring" },
+  { key: "salary", labelKey: "intel.progress.lane.salary" },
+  { key: "process", labelKey: "intel.progress.lane.process" },
+  { key: "risk", labelKey: "intel.progress.lane.risk" },
+];
 
-const EXTRA_ROWS = [
-  { key: "extract", label: "结构化抽取" },
-  { key: "verify", label: "防虚构校验" },
-  { key: "save", label: "存档" },
-] as const;
+const EXTRA_ROWS: { key: string; labelKey: MessageKey }[] = [
+  { key: "extract", labelKey: "intel.progress.extract" },
+  { key: "verify", labelKey: "intel.progress.verify" },
+  { key: "save", labelKey: "intel.progress.save" },
+];
 
 function StatusMark({ status }: { status: LaneStatus }) {
   if (status === "done") {
@@ -32,6 +34,7 @@ export default function IntelProgress({
   laneCounts: Record<string, number>;
   extras: Record<string, LaneStatus>;
 }) {
+  const { t } = useT();
   const rows = [
     ...LANE_ROWS.map((r) => ({ ...r, status: lanes[r.key] ?? "pending", count: laneCounts[r.key] })),
     ...EXTRA_ROWS.map((r) => ({ ...r, status: extras[r.key] ?? "pending", count: undefined })),
@@ -42,9 +45,11 @@ export default function IntelProgress({
     <div className="border border-dashed border-rule-strong bg-sheet/70 rounded-[2px] px-4 py-3.5 space-y-2.5 animate-fade-in">
       <div className="flex items-center justify-between pb-1 border-b border-rule">
         <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">
-          COLLECTING INTELLIGENCE
+          {t("intel.progress.header")}
         </span>
-        <span className="font-mono text-[10px] text-ink-faint">{doneCount}/7</span>
+        <span className="font-mono text-[10px] text-ink-faint">
+          {doneCount}/{rows.length}
+        </span>
       </div>
       <div className="space-y-2 stagger">
         {rows.map((r) => (
@@ -61,10 +66,12 @@ export default function IntelProgress({
                     : "text-ink-soft"
               }`}
             >
-              {r.label}
+              {t(r.labelKey)}
             </span>
             {r.status === "done" && r.count != null && (
-              <span className="font-latin text-xs text-seal ml-auto">{r.count} 条来源</span>
+              <span className="font-latin text-xs text-seal ml-auto">
+                {t("intel.progress.count", { n: r.count })}
+              </span>
             )}
           </div>
         ))}

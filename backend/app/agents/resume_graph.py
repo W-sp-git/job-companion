@@ -150,7 +150,7 @@ async def review_node(state: ResumeState) -> dict:
 
     company_context = state.get("company_context", "")
     if state.get("company") and not company_context:
-        _emit({"stage": "searching_company", "label": f"正在调研「{state['company']}」的岗位要求…"})
+        _emit({"stage": "searching_company", "company": state["company"], "label": f"正在调研「{state['company']}」的岗位要求…"})
         try:
             company_context = await web_search_text(
                 f"{state['company']} {state.get('target_role', '')} 岗位要求 技术栈", count=4
@@ -187,6 +187,8 @@ async def review_node(state: ResumeState) -> dict:
     _emit(
         {
             "stage": "reviewed",
+            "issues": len(review.issues),
+            "missing": len(ats["missing"]),
             "label": f"评审完成：{len(review.issues)} 条意见，ATS 缺失 {len(ats['missing'])} 项",
         }
     )
@@ -201,7 +203,7 @@ async def review_node(state: ResumeState) -> dict:
 
 async def refine_node(state: ResumeState) -> dict:
     iteration = int(state.get("iteration", 1)) + 1
-    _emit({"stage": "refining", "label": f"第 {iteration} 轮修订中…"})
+    _emit({"stage": "refining", "iteration": iteration, "label": f"第 {iteration} 轮修订中…"})
     llm = get_llm("draft", temperature=0.3)
     user = (
         f"【评审意见】\n{json.dumps(state.get('review') or {}, ensure_ascii=False)[:6000]}\n\n"

@@ -1,17 +1,19 @@
 import type { Evaluation } from "@/api/types";
 import { CountNumber } from "@/components/ui";
+import { useT } from "@/i18n";
 
 export default function ScorePanel({ scores, maxRounds }: { scores: Evaluation[]; maxRounds: number }) {
+  const { t } = useT();
   const avg = scores.length ? scores.reduce((a, s) => a + Number(s.score), 0) / scores.length : 0;
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between border-b border-rule pb-2">
         <span className="font-mono text-[11px] tracking-[0.12em] text-ink-soft">
-          已评分 {scores.length} / {maxRounds} 题
+          {t("chat.scores.progress", { done: scores.length, total: maxRounds })}
         </span>
         {scores.length > 0 && (
           <span className="font-mono text-[11px] text-ink-soft">
-            均分
+            {t("chat.scores.avg")}
             <span className="font-latin text-lg text-seal ml-1.5">
               <CountNumber value={avg} decimals={1} />
             </span>
@@ -23,7 +25,9 @@ export default function ScorePanel({ scores, maxRounds }: { scores: Evaluation[]
         {scores.map((s, i) => (
           <div key={i} className="space-y-1.5 animate-pop-in">
             <div className="flex items-baseline justify-between">
-              <span className="font-mono text-[11px] tracking-[0.14em] text-ink-soft">第 {i + 1} 题</span>
+              <span className="font-mono text-[11px] tracking-[0.14em] text-ink-soft">
+                {t("chat.scores.question", { n: i + 1 })}
+              </span>
               <span className="font-latin text-2xl leading-none text-seal">
                 <CountNumber value={Number(s.score)} decimals={1} />
               </span>
@@ -35,7 +39,7 @@ export default function ScorePanel({ scores, maxRounds }: { scores: Evaluation[]
           </div>
         ))}
         {scores.length === 0 && (
-          <p className="font-kai text-sm leading-6 text-ink-faint">完成回答后这里会出现红笔批改的逐题评分。</p>
+          <p className="font-kai text-sm leading-6 text-ink-faint">{t("chat.scores.empty")}</p>
         )}
       </div>
     </div>

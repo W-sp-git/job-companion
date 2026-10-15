@@ -83,7 +83,7 @@ async def opening_node(state: InterviewState) -> dict:
 
     company_context = ""
     if company:
-        _emit({"stage": "searching_company", "label": f"正在调研「{company}」的岗位背景与面经…"})
+        _emit({"stage": "searching_company", "company": company, "label": f"正在调研「{company}」的岗位背景与面经…"})
         try:
             company_context = await web_search_text(
                 f"{company} {target_role} 校招 面经 岗位要求", count=5
@@ -145,7 +145,7 @@ async def evaluate_answer_node(state: InterviewState) -> dict:
     )
     ev = evaluation.model_dump()
     round_no = int(state.get("round", 1))
-    _emit({"stage": "evaluated", "label": f"第 {round_no} 题评分完成"})
+    _emit({"stage": "evaluated", "round": round_no, "label": f"第 {round_no} 题评分完成"})
     try:
         profile_store.save_turn(sid, round_no, question, answer, ev)
     except Exception:  # noqa: BLE001
@@ -177,7 +177,7 @@ async def probe_node(state: InterviewState) -> dict:
 
 async def next_question_node(state: InterviewState) -> dict:
     round_no = int(state.get("round", 0)) + 1
-    _emit({"stage": "next_question", "label": f"第 {round_no} 题"})
+    _emit({"stage": "next_question", "round": round_no, "label": f"第 {round_no} 题"})
     llm = get_llm("interview", temperature=0.7, streaming=True)
     instruction = (
         f"（内部指令：请提出第 {round_no} 个问题（共 {state.get('max_rounds', 8)} 题）。"

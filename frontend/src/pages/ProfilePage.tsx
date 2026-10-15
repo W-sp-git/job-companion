@@ -4,23 +4,26 @@ import { api } from "@/api/client";
 import type { MemoryItem } from "@/api/types";
 import StatsPanel from "@/components/StatsPanel";
 import { Badge, Button, Card, Field, Stamp, inputCls } from "@/components/ui";
+import { useT } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
 
-const PROFILE_FIELDS: { key: string; label: string; placeholder: string }[] = [
-  { key: "school", label: "学校", placeholder: "如：某某大学" },
-  { key: "major", label: "专业", placeholder: "如：软件工程" },
-  { key: "grade", label: "年级", placeholder: "如：大三" },
-  { key: "target_role", label: "目标岗位", placeholder: "如：Java 后端开发工程师" },
-  { key: "target_city", label: "目标城市", placeholder: "如：杭州" },
-  { key: "skills", label: "技能", placeholder: "如：Java、Spring Boot、MySQL" },
+const PROFILE_FIELDS: { key: string; label: MessageKey; placeholder: MessageKey }[] = [
+  { key: "school", label: "profile.field.school", placeholder: "profile.field.school.placeholder" },
+  { key: "major", label: "profile.field.major", placeholder: "profile.field.major.placeholder" },
+  { key: "grade", label: "profile.field.grade", placeholder: "profile.field.grade.placeholder" },
+  { key: "target_role", label: "profile.field.role", placeholder: "profile.field.role.placeholder" },
+  { key: "target_city", label: "profile.field.city", placeholder: "profile.field.city.placeholder" },
+  { key: "skills", label: "profile.field.skills", placeholder: "profile.field.skills.placeholder" },
 ];
 
-const TYPE_META: Record<string, { label: string; tone: "green" | "amber" | "blue" | "neutral" }> = {
-  profile: { label: "档案", tone: "blue" },
-  weakness: { label: "弱点", tone: "amber" },
-  general: { label: "普通", tone: "neutral" },
+const TYPE_META: Record<string, { label: MessageKey; tone: "green" | "amber" | "blue" | "neutral" }> = {
+  profile: { label: "profile.memory.type.profile", tone: "blue" },
+  weakness: { label: "profile.memory.type.weakness", tone: "amber" },
+  general: { label: "profile.memory.type.general", tone: "neutral" },
 };
 
 export default function ProfilePage() {
+  const { t } = useT();
   const [form, setForm] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,6 +36,7 @@ export default function ProfilePage() {
       .then((r) => setForm(r.profile || {}))
       .catch(() => {});
     refreshMemories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function refreshMemories() {
@@ -73,21 +77,23 @@ export default function ProfilePage() {
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="eyebrow mb-2">Dossier Card · 人事档案</div>
-            <h2 className="font-display text-2xl font-black tracking-wide">我的档案</h2>
+            <div className="eyebrow mb-2">{t("profile.dossier.eyebrow")}</div>
+            <h2 className="font-display text-2xl font-black tracking-wide">{t("profile.dossier.title")}</h2>
           </div>
-          <Stamp size="md" className="shrink-0">档案</Stamp>
+          <Stamp size="md" className="shrink-0">
+            {t("profile.dossier.stamp")}
+          </Stamp>
         </div>
         <p className="font-kai text-xs text-ink-soft leading-5 border-b border-rule pb-4">
-          档案会写入长期记忆：面试出题与简历优化都会参考它。
+          {t("profile.dossier.hint")}
         </p>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-5">
           {PROFILE_FIELDS.map((f) => (
-            <Field key={f.key} label={f.label}>
+            <Field key={f.key} label={t(f.label)}>
               <input
                 className={inputCls}
-                placeholder={f.placeholder}
+                placeholder={t(f.placeholder)}
                 value={form[f.key] ?? ""}
                 onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
               />
@@ -97,51 +103,58 @@ export default function ProfilePage() {
 
         <div className="flex items-center gap-4 pt-1">
           <Button className="tracking-[0.2em]" onClick={save} disabled={saving}>
-            {saving ? "保存中…" : "保存档案"}
+            {saving ? t("common.saving") : t("profile.save")}
           </Button>
-          {saved && <span className="font-kai text-sm text-moss animate-pop-in">已保存，记忆同步中…</span>}
+          {saved && (
+            <span className="font-kai text-sm text-moss animate-pop-in">{t("profile.saved")}</span>
+          )}
         </div>
       </Card>
 
       {/* ============ 记忆索引卡 ============ */}
       <Card className="p-6 space-y-4 animate-ink-up [animation-delay:90ms]">
         <div className="flex items-end justify-between border-b-2 border-ink pb-2">
-          <h2 className="font-display text-xl font-black tracking-wide">长期记忆</h2>
+          <h2 className="font-display text-xl font-black tracking-wide">{t("profile.memory.title")}</h2>
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline font-mono text-[10px] tracking-[0.22em] text-ink-faint">
               MEMORY INDEX
             </span>
-            <Button variant="ghost" className="px-2.5 py-1 text-xs" onClick={refreshMemories} disabled={loadingMem}>
-              {loadingMem ? "刷新中…" : "刷新"}
+            <Button
+              variant="ghost"
+              className="px-2.5 py-1 text-xs"
+              onClick={refreshMemories}
+              disabled={loadingMem}
+            >
+              {loadingMem ? t("common.refreshing") : t("common.refresh")}
             </Button>
           </div>
         </div>
-        <p className="font-kai text-xs text-ink-soft">跨会话生效；可删除单条。</p>
+        <p className="font-kai text-xs text-ink-soft">{t("profile.memory.hint")}</p>
 
         <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1 stagger">
           {memories.map((m) => {
-            const t = String((m.metadata?.type as string) ?? "general");
-            const meta = TYPE_META[t] ?? TYPE_META.general;
+            const type = String((m.metadata?.type as string) ?? "general");
+            const meta = TYPE_META[type] ?? TYPE_META.general;
             return (
               <div
                 key={m.id}
                 className="flex items-start gap-3 border border-rule-strong bg-sheet-bright rounded-[2px] p-3 text-sm transition-shadow duration-150 hover:shadow-print"
               >
                 <Badge tone={meta.tone} className="shrink-0 mt-0.5">
-                  {meta.label}
+                  {t(meta.label)}
                 </Badge>
                 <span className="flex-1 leading-6">{m.memory}</span>
                 <button
                   className="font-mono text-[10px] tracking-[0.14em] text-ink-faint hover:text-seal transition-colors shrink-0 mt-1"
                   onClick={() => removeMemory(m.id)}
                 >
-                  删除
+                  {t("common.delete")}
                 </button>
               </div>
             );
           })}
           {!memories.length && !loadingMem && (
-            <p className="font-kai text-sm text-ink-faint">暂无记忆：去聊一场面试或保存档案试试。</p>
+            <p className="font-kai text-sm text-ink-faint">{t("profile.memory.empty")}</p>
           )}
         </div>
       </Card>

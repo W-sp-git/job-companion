@@ -2,6 +2,7 @@ import { diffLines } from "diff";
 
 import type { ResumeVersion } from "@/api/types";
 import { draftToText } from "@/lib/resumeText";
+import { useT } from "@/i18n";
 
 export default function VersionDiff({
   current,
@@ -12,6 +13,7 @@ export default function VersionDiff({
   previous: ResumeVersion | null;
   onClose: () => void;
 }) {
+  const { t } = useT();
   const currText = draftToText(current.draft_json);
   const parts = previous
     ? diffLines(draftToText(previous.draft_json), currText)
@@ -28,27 +30,27 @@ export default function VersionDiff({
       >
         <div className="flex justify-between items-start mb-3">
           <div>
-            <div className="eyebrow mb-1">Proof / 校样</div>
+            <div className="eyebrow mb-1">{t("diff.eyebrow")}</div>
             <h3 className="font-display text-base font-bold">
-              版本对比：
+              {t("diff.title")}
               {previous
                 ? `v${previous.version_no} → v${current.version_no}`
-                : `v${current.version_no}（首个版本）`}
+                : t("diff.firstVersion", { n: current.version_no })}
             </h3>
           </div>
           <button
             className="font-mono text-[11px] tracking-[0.14em] text-ink-soft hover:text-seal transition-colors"
             onClick={onClose}
           >
-            关闭
+            {t("common.close")}
           </button>
         </div>
         <div className="flex items-center gap-4 border-y border-rule py-1.5 mb-4 font-mono text-[10px] tracking-[0.14em] text-ink-faint">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 bg-moss/25 border border-moss/50" /> 新增
+            <span className="inline-block h-2.5 w-2.5 bg-moss/25 border border-moss/50" /> {t("diff.added")}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 bg-seal/15 border border-seal/50" /> 删除
+            <span className="inline-block h-2.5 w-2.5 bg-seal/15 border border-seal/50" /> {t("diff.removed")}
           </span>
         </div>
         <pre className="font-mono text-xs leading-relaxed whitespace-pre-wrap">

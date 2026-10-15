@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 import { api } from "@/api/client";
 import { createSSEStream } from "@/api/sse";
+import { translate } from "@/i18n";
 import type { IntelReportPayload, IntelSource, IntelVerification } from "@/api/types";
 
 export type LaneStatus = "pending" | "active" | "done";
@@ -90,7 +91,7 @@ export const useIntelStore = create<IntelStore>((set, get) => {
                 } else if (stage === "extract" || stage === "verify" || stage === "save") {
                   set({ extras: advanceExtras(stage) });
                 } else if (stage === "failed") {
-                  set({ phase: "failed", error: String(d.label ?? "生成失败"), controller: null });
+                  set({ phase: "failed", error: translate("stage.failed_no_source"), controller: null });
                 }
                 break;
               }
@@ -100,7 +101,7 @@ export const useIntelStore = create<IntelStore>((set, get) => {
               case "error":
                 set({
                   phase: "failed",
-                  error: String(d.message ?? "未知错误"),
+                  error: String(d.message ?? translate("common.unknownError")),
                   controller: null,
                 });
                 break;
@@ -175,7 +176,7 @@ export const useIntelStore = create<IntelStore>((set, get) => {
           company: detail.company,
           targetRole: detail.target_role,
           phase: "failed",
-          error: detail.error || "生成失败",
+          error: detail.error || translate("common.unknownError"),
           payload: null,
           controller: null,
         });

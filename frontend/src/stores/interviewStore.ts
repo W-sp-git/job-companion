@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 import { api } from "@/api/client";
 import { createSSEStream } from "@/api/sse";
+import { stageLabel, translate } from "@/i18n";
 import type { ChatMessage, CreatePayload, Evaluation, InterviewReport, SessionInfo } from "@/api/types";
 
 type Stage = { label: string } | null;
@@ -47,7 +48,7 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
             const d = data as Record<string, unknown>;
             switch (event) {
               case "stage":
-                set({ stage: { label: String(d.label ?? "") } });
+                set({ stage: { label: stageLabel(d) } });
                 break;
               case "token": {
                 const delta = String(d.delta ?? "");
@@ -70,7 +71,13 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
                 set({ report: d as unknown as InterviewReport });
                 break;
               case "error":
-                set({ stage: { label: `出错了：${String(d.message ?? "未知错误")}` } });
+                set({
+                  stage: {
+                    label: translate("error.prefix", {
+                      message: String(d.message ?? translate("common.unknownError")),
+                    }),
+                  },
+                });
                 break;
               case "done":
                 set({ isStreaming: false, controller: null, stage: null });
@@ -81,7 +88,11 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
           },
           onClose: () => set({ isStreaming: false, controller: null }),
           onError: (err) =>
-            set({ isStreaming: false, controller: null, stage: { label: `连接失败：${String(err)}` } }),
+            set({
+              isStreaming: false,
+              controller: null,
+              stage: { label: translate("error.connect", { message: String(err) }) },
+            }),
         },
       ),
     });

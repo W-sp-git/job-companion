@@ -2,12 +2,17 @@ import { Link } from "react-router-dom";
 
 import type { IntelReportMeta } from "@/api/types";
 import { Badge } from "@/components/ui";
+import { useT } from "@/i18n";
+import type { MessageKey } from "@/i18n/messages";
 
-const STATUS_META: Record<string, { label: string; tone: "green" | "red" | "blue" | "neutral" }> = {
-  done: { label: "已完成", tone: "green" },
-  failed: { label: "失败", tone: "red" },
-  running: { label: "收集中", tone: "blue" },
-  created: { label: "待生成", tone: "neutral" },
+const STATUS_META: Record<
+  string,
+  { label: MessageKey; tone: "green" | "red" | "blue" | "neutral" }
+> = {
+  done: { label: "intel.archive.status.done", tone: "green" },
+  failed: { label: "intel.archive.status.failed", tone: "red" },
+  running: { label: "intel.archive.status.running", tone: "blue" },
+  created: { label: "intel.archive.status.created", tone: "neutral" },
 };
 
 function fmtDay(iso: string): string {
@@ -21,14 +26,15 @@ export default function IntelArchiveList({
   items: IntelReportMeta[];
   activeId?: number | null;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-3">
       <div className="flex items-end justify-between border-b-2 border-ink pb-2">
-        <h3 className="font-display text-base font-bold tracking-wide">背调存档</h3>
+        <h3 className="font-display text-base font-bold tracking-wide">{t("intel.archive.title")}</h3>
         <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">INTEL ARCHIVE</span>
       </div>
       {items.length === 0 && (
-        <p className="font-kai text-xs text-ink-faint">暂无背调存档：生成一份「情报简报」后会在这里归档。</p>
+        <p className="font-kai text-xs text-ink-faint">{t("intel.archive.empty")}</p>
       )}
       <div className="space-y-2 stagger">
         {items.map((r) => {
@@ -48,15 +54,17 @@ export default function IntelArchiveList({
                     {r.target_role && <span className="text-ink-faint"> · {r.target_role}</span>}
                   </span>
                   <Badge tone={meta.tone} className="shrink-0">
-                    {meta.label}
+                    {t(meta.label)}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <span className="font-mono text-[10px] text-ink-faint">
-                    NO. {String(r.id).padStart(3, "0")} · {fmtDay(r.created_at)}
+                    {t("intel.archive.no", { no: String(r.id).padStart(3, "0"), date: fmtDay(r.created_at) })}
                   </span>
                   {r.status === "done" && r.source_count > 0 && (
-                    <span className="font-mono text-[10px] text-ink-faint">{r.source_count} 条来源</span>
+                    <span className="font-mono text-[10px] text-ink-faint">
+                      {t("intel.archive.sources", { n: r.source_count })}
+                    </span>
                   )}
                 </div>
                 {r.summary && (

@@ -113,9 +113,13 @@ export function Stamp({
     lg: "h-20 w-20 text-xl",
     xl: "h-32 w-32 text-4xl",
   }[size];
+  // 拉丁词比中文两字宽得多：6 字母以上（或大章的 5 字母）自动缩小，避免穿出圆环
+  const text = typeof children === "string" ? children.trim() : "";
+  const shrink =
+    /^[A-Za-z]+$/.test(text) && (text.length >= 6 || (text.length === 5 && size === "xl"));
   return (
     <span className={`stamp ${tones} ${sizes} ${animate ? "animate-stamp-in" : ""} ${className}`} aria-hidden="true">
-      {children}
+      {shrink ? <span className="text-[0.58em] tracking-[0.12em]">{children}</span> : children}
     </span>
   );
 }
