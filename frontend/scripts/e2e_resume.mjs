@@ -1,10 +1,20 @@
-// 浏览器端到端验证：简历优化全流程（驱动本机 Microsoft Edge）
+// 浏览器端到端验证：简历优化全流程（默认驱动本机 Microsoft Edge）
 // 运行：node scripts/e2e_resume.mjs
+// 可用 E2E_BROWSER 指定浏览器可执行文件，E2E_RESUME 指定简历样本
 import { chromium } from "playwright-core";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const EDGE = "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge";
+const EDGE =
+  process.env.E2E_BROWSER ||
+  "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge";
 const BASE = "http://localhost:5173";
-const RESUME = "/Users/wang/Local_file/backend/samples/resume_text.pdf";
+const RESUME =
+  process.env.E2E_RESUME ||
+  path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../backend/samples/resume_text.pdf",
+  );
 const JD =
   "负责后端服务的设计与开发；要求：熟悉 Java、Spring Boot、MySQL、Redis；了解消息队列 Kafka/RocketMQ；熟悉 Linux 常用命令；具备良好的工程习惯（单元测试、代码评审）；有分布式系统经验者优先。";
 

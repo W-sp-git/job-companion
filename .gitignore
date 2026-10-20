@@ -1,5 +1,7 @@
 # ===== 密钥（切勿提交）=====
 .env
+.env.local
+.env.*.local
 api_key.txt
 
 # ===== Python =====
@@ -15,6 +17,15 @@ dist/
 
 # ===== 运行时数据 =====
 backend/data/
+
+# ===== 本地个人材料（简历、导出件、录屏，只留在本机）=====
+/*.pdf
+/*.docx
+/*.doc
+/*.png
+/*.jpg
+/*.jpeg
+/*.mp4
 
 # ===== 系统 =====
 .DS_Store

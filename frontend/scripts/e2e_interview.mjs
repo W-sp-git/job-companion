@@ -1,8 +1,11 @@
-// 浏览器端到端验证：面试全流程（驱动本机 Microsoft Edge）
+// 浏览器端到端验证：面试全流程（默认驱动本机 Microsoft Edge）
 // 运行：node scripts/e2e_interview.mjs
+// 可用 E2E_BROWSER 指定浏览器可执行文件
 import { chromium } from "playwright-core";
 
-const EDGE = "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge";
+const EDGE =
+  process.env.E2E_BROWSER ||
+  "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge";
 const BASE = "http://localhost:5173";
 
 const browser = await chromium.launch({ executablePath: EDGE, headless: true });

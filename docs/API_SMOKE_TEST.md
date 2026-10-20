@@ -4,7 +4,7 @@
 
 ## 连接原因与处理
 
-`api_key.txt` 中四家密钥与 `backend/.env` 一致，真实调用验证密钥有效。
+本机 `.env` 中四家密钥均经真实调用验证有效（密钥只保存在本机忽略文件里，未进入版本库）。
 Python 自动读取 macOS 系统代理 `127.0.0.1:7897`，通义与智谱在这条代理路径上出现 TLS 提前断开（`UNEXPECTED_EOF_WHILE_READING`）；同一密钥直连成功。
 
 已增加 `API_NO_PROXY` 配置，并在本机 `.env` 中仅为 `dashscope.aliyuncs.com,open.bigmodel.cn` 启用直连。保留其他代理与已有排除项，不关闭证书校验，不更换密钥，不修改系统代理。
