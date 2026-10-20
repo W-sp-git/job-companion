@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -52,3 +52,15 @@ def init_db() -> None:
     from app.db import models  # noqa: F401 - 注册表结构
 
     Base.metadata.create_all(get_engine())
+    # Additive migration for existing local installations. Never rebuild user tables.
+    with get_engine().begin() as connection:
+        for table in ("resume_versions", "interview_sessions"):
+            columns = {
+                column["name"] for column in inspect(connection).get_columns(table)
+            }
+            if "context_json" not in columns:
+                connection.execute(
+                    text(
+                        f"ALTER TABLE {table} ADD COLUMN context_json JSON NOT NULL DEFAULT '{{}}'"
+                    )
+                )

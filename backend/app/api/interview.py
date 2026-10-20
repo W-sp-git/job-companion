@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -11,7 +12,9 @@ from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
 from app.agents.interview_graph import STREAMING_NODES, get_interview_graph
-from app.tools import profile_store, weakness_cluster
+from app.db.models import JobOpportunity
+from app.tools import profile_store, weakness_cluster, workspace_store
+from app.tools.candidate import enriched_resume, redact
 from app.utils.sse import iter_stream_events, sse_frame
 
 router = APIRouter(prefix="/api/interview", tags=["interview"])
@@ -21,12 +24,17 @@ _session_locks: dict[str, asyncio.Lock] = {}
 
 
 class CreateSessionBody(BaseModel):
-    mode: str = "behavioral"
+    mode: Literal["behavioral", "technical", "project", "pressure"] = "behavioral"
     target_role: str = ""
     jd_text: str = ""
     company: str = ""
     max_rounds: int = Field(8, ge=1, le=20)
     user_id: str = DEFAULT_USER
+    job_id: int | None = None
+    resume_version_id: int | None = None
+    intel_report_id: int | None = None
+    locale: Literal["zh", "en"] = "zh"
+    feedback_mode: Literal["coaching", "simulation"] = "coaching"
 
 
 class StreamBody(BaseModel):
@@ -36,16 +44,59 @@ class StreamBody(BaseModel):
 
 @router.post("/sessions")
 async def create_session(body: CreateSessionBody) -> dict:
+    job = (
+        workspace_store.get_record(JobOpportunity, body.job_id) if body.job_id else None
+    )
+    if body.job_id and not job:
+        raise HTTPException(404, "岗位不存在")
+    version_id = body.resume_version_id or (job or {}).get("resume_version_id")
+    resume_context = {}
+    if version_id:
+        version = profile_store.get_version(version_id)
+        if not version:
+            raise HTTPException(422, "简历版本不存在")
+        from app.api.resume import export_issues
+
+        if export_issues(version):
+            raise HTTPException(
+                422, "所选简历仍有事实或高风险评审问题，请先在简历工作室核对"
+            )
+        resume_context = redact(version["draft_json"])
+    else:
+        resume_context = redact(enriched_resume({}))
+    intel_id = body.intel_report_id or (job or {}).get("intel_report_id")
+    intel = profile_store.get_intel_report(intel_id) if intel_id else None
+    company = job["company"] if job else body.company
+    if intel_id and (
+        not intel or intel["status"] != "done" or intel["company"] != company
+    ):
+        raise HTTPException(422, "情报必须来自同一公司的已完成报告")
+    context = {
+        "job_id": body.job_id,
+        "resume_version_id": version_id,
+        "resume_context": resume_context,
+        "company_context": (intel or {}).get("report_json") or {},
+        "locale": body.locale,
+        "feedback_mode": body.feedback_mode,
+    }
     sid = uuid.uuid4().hex[:12]
     profile_store.create_session(
         sid,
         body.user_id,
         body.mode,
-        body.target_role,
-        body.jd_text,
+        job["target_role"] if job else body.target_role,
+        job["jd_text"] if job else body.jd_text,
         body.max_rounds,
-        company=body.company,
+        company=company,
+        context=context,
     )
+    if body.job_id:
+        workspace_store.add_activity(
+            body.job_id,
+            "mock_interview",
+            "开始岗位模拟面试",
+            {"session_id": sid, "resume_version_id": version_id},
+        )
     return {"session_id": sid}
 
 
@@ -82,7 +133,8 @@ async def get_session_detail(sid: str) -> dict:
             messages.append({"role": role, "content": content})
     except Exception:  # noqa: BLE001 - 状态不可用时退回逐题记录
         messages = [
-            {"role": "assistant", "content": t["question"]} for t in profile_store.list_turns(sid)
+            {"role": "assistant", "content": t["question"]}
+            for t in profile_store.list_turns(sid)
         ]
 
     return {
@@ -101,7 +153,9 @@ async def get_session_report(sid: str) -> dict:
 
 
 @router.post("/sessions/{sid}/stream")
-async def stream_turn(sid: str, body: StreamBody, request: Request) -> StreamingResponse:
+async def stream_turn(
+    sid: str, body: StreamBody, request: Request
+) -> StreamingResponse:
     session = profile_store.get_session(sid)
     if session is None:
         raise HTTPException(status_code=404, detail="会话不存在")
@@ -118,6 +172,16 @@ async def stream_turn(sid: str, body: StreamBody, request: Request) -> Streaming
             "max_rounds": session["max_rounds"],
             "company": session.get("company", ""),
             "status": "created",
+            **{
+                key: session.get("context", {}).get(key, default)
+                for key, default in (
+                    ("resume_context", {}),
+                    ("company_context", {}),
+                    ("job_id", None),
+                    ("locale", "zh"),
+                    ("feedback_mode", "coaching"),
+                )
+            },
         }
     elif body.control == "answer":
         if not body.message.strip():
@@ -153,7 +217,11 @@ async def stream_turn(sid: str, body: StreamBody, request: Request) -> Streaming
     graph_task = asyncio.create_task(run_graph())
 
     def _is_sentinel(chunk) -> str | None:
-        if isinstance(chunk, tuple) and len(chunk) == 2 and chunk[0] in ("__end__", "__error__"):
+        if (
+            isinstance(chunk, tuple)
+            and len(chunk) == 2
+            and chunk[0] in ("__end__", "__error__")
+        ):
             return chunk[0]
         return None
 
@@ -185,7 +253,11 @@ async def stream_turn(sid: str, body: StreamBody, request: Request) -> Streaming
                     if node in STREAMING_NODES and isinstance(content, str) and content:
                         yield sse_frame("token", {"delta": content})
                 elif mode == "custom":
-                    data = payload if isinstance(payload, dict) else {"label": str(payload)}
+                    data = (
+                        payload
+                        if isinstance(payload, dict)
+                        else {"label": str(payload)}
+                    )
                     yield sse_frame("stage", data)
                 elif mode == "updates":
                     for node, update in (payload or {}).items():
@@ -201,7 +273,9 @@ async def stream_turn(sid: str, body: StreamBody, request: Request) -> Streaming
         finally:
             # 断连时图任务继续在后台跑完（状态与锁由它自己收尾）
             if not graph_task.done():
-                graph_task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
+                graph_task.add_done_callback(
+                    lambda t: t.exception() if not t.cancelled() else None
+                )
 
     return StreamingResponse(
         gen(),

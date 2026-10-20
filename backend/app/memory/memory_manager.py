@@ -2,7 +2,7 @@
 
 读写时机（调用方负责）：
 - 读：面试开场注入弱点/背景；简历起草提示强化方向；记忆管理页展示
-- 写：每轮回答后（后台任务）；复盘报告后写弱点；档案保存后 ingest
+- 写：复盘报告后写弱点；档案保存后后台 ingest。回答原文保存在面试记录中。
 Mem0 的 add 内部是一次 LLM 提取调用（数秒），务必放后台。
 """
 
@@ -31,6 +31,7 @@ def _build_config() -> dict:
     settings = get_settings()
     provider = settings.mem0_llm_provider
     return {
+        "history_db_path": str(Path(settings.data_dir) / "memory_history.db"),
         "llm": {
             "provider": "openai",
             "config": {
@@ -91,18 +92,25 @@ def _normalize(results: Any) -> list[dict]:
 # ---------- 同步实现 ----------
 # mem0ai >= 2.x：search/get_all 用 filters 传 user_id，条数参数为 top_k
 
+
 def recall(user_id: str, query: str, limit: int = 5) -> list[dict]:
     return _normalize(
         get_memory().search(query=query, filters={"user_id": user_id}, top_k=limit)
     )
 
 
-def remember_messages(user_id: str, messages: list[dict], metadata: dict | None = None) -> None:
+def remember_messages(
+    user_id: str, messages: list[dict], metadata: dict | None = None
+) -> None:
     """messages 形如 [{"role": "user"/"assistant", "content": "..."}]。"""
-    get_memory().add(messages, user_id=user_id, metadata=metadata or {}, prompt=_EXTRACT_INSTRUCTIONS)
+    get_memory().add(
+        messages, user_id=user_id, metadata=metadata or {}, prompt=_EXTRACT_INSTRUCTIONS
+    )
 
 
-def remember_fact(user_id: str, fact: str, fact_type: str = "general", **extra_meta: Any) -> None:
+def remember_fact(
+    user_id: str, fact: str, fact_type: str = "general", **extra_meta: Any
+) -> None:
     get_memory().add(
         [{"role": "user", "content": fact}],
         user_id=user_id,
@@ -128,15 +136,20 @@ def forget(memory_id: str) -> None:
 
 # ---------- 异步包装（节点内含 I/O 时用） ----------
 
+
 async def arecall(user_id: str, query: str, limit: int = 5) -> list[dict]:
     return await asyncio.to_thread(recall, user_id, query, limit)
 
 
-async def aremember_messages(user_id: str, messages: list[dict], metadata: dict | None = None) -> None:
+async def aremember_messages(
+    user_id: str, messages: list[dict], metadata: dict | None = None
+) -> None:
     await asyncio.to_thread(remember_messages, user_id, messages, metadata)
 
 
-async def aremember_fact(user_id: str, fact: str, fact_type: str = "general", **extra_meta: Any) -> None:
+async def aremember_fact(
+    user_id: str, fact: str, fact_type: str = "general", **extra_meta: Any
+) -> None:
     await asyncio.to_thread(remember_fact, user_id, fact, fact_type, **extra_meta)
 
 
@@ -154,12 +167,16 @@ async def aforget(memory_id: str) -> None:
 
 # ---------- 生命周期 ----------
 
+
 def close() -> None:
     """关闭向量库客户端（进程退出前调用，避免 Qdrant __del__ 关闭噪音）。"""
     global _memory
     if _memory is None:
         return
     try:
+        history = getattr(_memory, "db", None)
+        if history is not None and hasattr(history, "close"):
+            history.close()
         client = getattr(getattr(_memory, "vector_store", None), "client", None)
         if client is not None:
             client.close()

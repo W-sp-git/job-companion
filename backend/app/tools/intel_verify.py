@@ -14,9 +14,20 @@ import re
 from app.agents.schemas import IntelReport
 from app.tools.intel_search import EvidenceItem
 
-_RANGE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*[-~—–至到]\s*(\d+(?:\.\d+)?)\s*(万|w|W|k|K|千)")
+_RANGE_RE = re.compile(
+    r"(\d+(?:\.\d+)?)\s*[-~—–至到]\s*(\d+(?:\.\d+)?)\s*(万|w|W|k|K|千)"
+)
 _SINGLE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(万|w|W|k|K|千|元|块)?")
-_UNIT_MAP = {"万": 10_000, "w": 10_000, "W": 10_000, "k": 1_000, "K": 1_000, "千": 1_000, "元": 1, "块": 1}
+_UNIT_MAP = {
+    "万": 10_000,
+    "w": 10_000,
+    "W": 10_000,
+    "k": 1_000,
+    "K": 1_000,
+    "千": 1_000,
+    "元": 1,
+    "块": 1,
+}
 
 
 def _to_halfwidth(text: str) -> str:
@@ -69,16 +80,33 @@ def sanitize_source_ids(ids: list[int], valid: set[int]) -> list[int]:
     return out
 
 
-def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tuple[dict, dict]:
+def verify_intel_report(
+    report: IntelReport, evidence: list[EvidenceItem]
+) -> tuple[dict, dict]:
     by_sid = {ev.sid: ev for ev in evidence}
     valid_sids = set(by_sid)
 
-    corpus_nums: set[str] = set()
-    for ev in evidence:
-        corpus_nums |= extract_canonical_numbers(f"{ev.title} {ev.snippet}")
+    def bad_numbers(text: str, sids: list[int]) -> list[str]:
+        corpus_nums: set[str] = set()
+        for sid in sanitize_source_ids(sids, valid_sids):
+            ev = by_sid[sid]
+            corpus_nums |= extract_canonical_numbers(f"{ev.title} {ev.snippet}")
+        return [
+            n
+            for n in extract_canonical_numbers(text)
+            if len(n) > 1 and n not in corpus_nums
+        ]
 
-    def bad_numbers(text: str) -> list[str]:
-        return [n for n in extract_canonical_numbers(text) if len(n) > 1 and n not in corpus_nums]
+    def quote_found(quote: str, sids: list[int]) -> bool:
+        norm = lambda value: re.sub(r"\s+", "", value).lower()
+        return bool(
+            quote.strip()
+            and any(
+                norm(quote) in norm(by_sid[sid].snippet)
+                for sid in sids
+                if sid in by_sid
+            )
+        )
 
     def src_list(sids: list[int]) -> list[dict]:
         return [
@@ -92,13 +120,25 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
             for s in sids
         ]
 
-    def check(text: str, sids: list[int]) -> tuple[str, list[dict]]:
+    def check(text: str, sids: list[int], quote: str = "") -> tuple[str, list[dict]]:
         clean = sanitize_source_ids(sids, valid_sids)
         sources = src_list(clean)
-        return ("verified" if clean and not bad_numbers(text) else "unverified"), sources
+        return (
+            "verified"
+            if clean
+            and not bad_numbers(text, clean)
+            and quote_found(quote or text, clean)
+            and not (
+                extract_canonical_numbers(text)
+                - extract_canonical_numbers(quote or text)
+            )
+            else "unverified"
+        ), sources
 
     total = verified = unverified = dropped_risk = 0
-    notes: list[str] = []
+    notes: list[str] = [
+        "仅检查所引来源中的摘录与数字，不代表独立事实核实；请结合发布日期、岗位和地区判断。"
+    ]
 
     # 核要：含未佐证数字的句子整句剔除
     kept: list[str] = []
@@ -107,25 +147,25 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
         sent = sent.strip()
         if not sent:
             continue
-        if bad_numbers(sent):
+        if bad_numbers(sent, report.summary_source_ids):
             dropped_sentences += 1
             continue
         kept.append(sent)
     if dropped_sentences:
         notes.append(f"核要中 {dropped_sentences} 个含未佐证数字的句子已剔除")
 
-    def claim_row(check_text: str, sids: list[int], **extra) -> dict:
+    def claim_row(check_text: str, sids: list[int], quote: str = "", **extra) -> dict:
         nonlocal total, verified, unverified
-        status, sources = check(check_text, sids)
+        status, sources = check(check_text, sids, quote)
         total += 1
         if status == "verified":
             verified += 1
         else:
             unverified += 1
-        return {"status": status, "sources": sources, **extra}
+        return {"status": status, "sources": sources, "evidence_quote": quote, **extra}
 
     basics = [
-        claim_row(b.text.strip(), b.source_ids, text=b.text.strip())
+        claim_row(b.text.strip(), b.source_ids, b.evidence_quote, text=b.text.strip())
         for b in report.basics
         if b.text.strip()
     ]
@@ -133,6 +173,7 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
         claim_row(
             f"{h.position} {h.trend}",
             h.source_ids,
+            h.evidence_quote,
             position=h.position.strip(),
             location=h.location.strip(),
             trend=h.trend.strip(),
@@ -144,6 +185,7 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
         claim_row(
             f"{s.range_text} {s.notes}",
             s.source_ids,
+            s.evidence_quote,
             role_hint=s.role_hint.strip(),
             range_text=s.range_text.strip(),
             notes=s.notes.strip(),
@@ -155,6 +197,7 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
         claim_row(
             f"{p.stage} {p.detail}",
             p.source_ids,
+            p.evidence_quote,
             stage=p.stage.strip(),
             detail=p.detail.strip(),
         )
@@ -168,11 +211,24 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
         if not text:
             continue
         clean = sanitize_source_ids(r.source_ids, valid_sids)
-        if not clean or bad_numbers(text):
+        if (
+            not clean
+            or bad_numbers(text, clean)
+            or not quote_found(r.evidence_quote or text, clean)
+            or (
+                extract_canonical_numbers(text)
+                - extract_canonical_numbers(r.evidence_quote or text)
+            )
+        ):
             dropped_risk += 1
             continue
         risks.append(
-            {"category": r.category.strip() or "其他", "text": text, "sources": src_list(clean)}
+            {
+                "category": r.category.strip() or "其他",
+                "text": text,
+                "sources": src_list(clean),
+                "evidence_quote": r.evidence_quote,
+            }
         )
     if dropped_risk:
         notes.append(f"已剔除 {dropped_risk} 条无公开来源佐证的风险线索")
@@ -183,7 +239,9 @@ def verify_intel_report(report: IntelReport, evidence: list[EvidenceItem]) -> tu
         "company": report.company.strip(),
         "target_role": report.target_role.strip(),
         "summary": "".join(kept),
-        "summary_sources": src_list(sanitize_source_ids(report.summary_source_ids, valid_sids)),
+        "summary_sources": src_list(
+            sanitize_source_ids(report.summary_source_ids, valid_sids)
+        ),
         "basics": basics,
         "hiring": hiring,
         "salary": salary,

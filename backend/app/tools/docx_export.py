@@ -6,7 +6,7 @@ from pathlib import Path
 
 from docx import Document
 from docx.oxml.ns import qn
-from docx.shared import Pt
+from docx.shared import Mm, Pt
 
 from app.agents.schemas import ResumeDraft
 
@@ -20,7 +20,9 @@ def _set_cn_font(run, size: float = 10.5, bold: bool = False) -> None:
     run.font.bold = bold
 
 
-def _para(doc, text: str, *, size: float = 10.5, bold: bool = False, space_after: float = 2.0):
+def _para(
+    doc, text: str, *, size: float = 10.5, bold: bool = False, space_after: float = 2.0
+):
     p = doc.add_paragraph()
     p.paragraph_format.space_after = Pt(space_after)
     run = p.add_run(text)
@@ -43,6 +45,8 @@ def _join(*parts: str) -> str:
 def render_resume_docx(draft: ResumeDraft, out_path: str | Path) -> str:
     doc = Document()
     for section in doc.sections:
+        section.page_width = Mm(210)
+        section.page_height = Mm(297)
         section.top_margin = Pt(48)
         section.bottom_margin = Pt(48)
         section.left_margin = Pt(50)
@@ -63,7 +67,12 @@ def render_resume_docx(draft: ResumeDraft, out_path: str | Path) -> str:
         _section(doc, "教育背景")
         for ed in draft.education:
             date = _join(f"{ed.start} - {ed.end}") if (ed.start or ed.end) else ""
-            _para(doc, _join(date, ed.school, ed.major, ed.degree), bold=True, space_after=1)
+            _para(
+                doc,
+                _join(date, ed.school, ed.major, ed.degree),
+                bold=True,
+                space_after=1,
+            )
             for h in ed.highlights:
                 _para(doc, f"· {h}")
 
@@ -91,6 +100,11 @@ def render_resume_docx(draft: ResumeDraft, out_path: str | Path) -> str:
         _section(doc, "获奖情况")
         for a in draft.awards:
             _para(doc, f"· {a}")
+
+    if draft.other:
+        _section(doc, "其他经历与作品")
+        for item in draft.other:
+            _para(doc, f"· {item}")
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

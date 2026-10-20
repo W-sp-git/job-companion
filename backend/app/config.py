@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -75,6 +76,8 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8010
     data_dir: str = str(BACKEND_DIR / "data")
+    llm_timeout_seconds: float = 90
+    api_no_proxy: str = ""
 
     def provider_key(self, provider: str) -> str:
         meta = PROVIDER_REGISTRY.get(provider)
@@ -91,4 +94,29 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    apply_api_proxy_bypass(settings.api_no_proxy)
+    return settings
+
+
+def apply_api_proxy_bypass(hosts: str) -> None:
+    """Opt selected API hosts out of system proxies for all SDKs, including Mem0.
+
+    Preserve both existing spellings: urllib/httpx may prefer the lowercase one.
+    No proxy or certificate settings are changed unless explicitly configured.
+    """
+    if not hosts.strip():
+        return
+    entries = dict.fromkeys(
+        host.strip()
+        for value in (
+            os.environ.get("NO_PROXY", ""),
+            os.environ.get("no_proxy", ""),
+            hosts,
+        )
+        for host in value.split(",")
+        if host.strip()
+    )
+    value = ",".join(entries)
+    os.environ["NO_PROXY"] = value
+    os.environ["no_proxy"] = value

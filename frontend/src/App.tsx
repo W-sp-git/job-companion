@@ -1,19 +1,28 @@
 import { BrowserRouter, Link, NavLink, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 import type { MessageKey } from "@/i18n/messages";
 import { useLocaleStore, useT } from "@/i18n";
-import HomePage from "@/pages/HomePage";
-import IntelPage from "@/pages/IntelPage";
-import InterviewPage from "@/pages/InterviewPage";
-import ProfilePage from "@/pages/ProfilePage";
-import ResumePage from "@/pages/ResumePage";
+import { LoadingRows } from "@/components/workspace";
+const HomePage = lazy(() => import("@/pages/HomePage"));
+const JobsPage = lazy(() => import("@/pages/JobsPage"));
+const ExperiencePage = lazy(() => import("@/pages/ExperiencePage"));
+const PracticePage = lazy(() => import("@/pages/PracticePage"));
+const IntelPage = lazy(() => import("@/pages/IntelPage"));
+const InterviewPage = lazy(() => import("@/pages/InterviewPage"));
+const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
+const ResumePage = lazy(() => import("@/pages/ResumePage"));
+const ResumePrintPage = lazy(() => import("@/pages/ResumePrintPage"));
 
 const navItems: { to: string; no: string; key: MessageKey }[] = [
   { to: "/", no: "01", key: "nav.home" },
-  { to: "/interview", no: "02", key: "nav.interview" },
-  { to: "/resume", no: "03", key: "nav.resume" },
-  { to: "/profile", no: "04", key: "nav.profile" },
-  { to: "/intel", no: "05", key: "nav.intel" },
+  { to: "/jobs", no: "02", key: "nav.jobs" },
+  { to: "/experiences", no: "03", key: "nav.experiences" },
+  { to: "/resume", no: "04", key: "nav.resume" },
+  { to: "/interview", no: "05", key: "nav.interview" },
+  { to: "/practice", no: "06", key: "nav.practice" },
+  { to: "/intel", no: "07", key: "nav.intel" },
+  { to: "/profile", no: "08", key: "nav.profile" },
 ];
 
 function LocaleSwitch() {
@@ -26,7 +35,9 @@ function LocaleSwitch() {
           onClick={() => setLocale(l)}
           aria-label={`switch language to ${l}`}
           className={`px-1.5 py-1 font-mono text-[10px] tracking-wider rounded-[2px] transition-colors ${
-            locale === l ? "text-seal font-bold" : "text-ink-faint hover:text-ink"
+            locale === l
+              ? "text-seal font-bold"
+              : "text-ink-faint hover:text-ink"
           }`}
         >
           {l === "zh" ? "中" : "EN"}
@@ -72,7 +83,9 @@ export default function App() {
                       }`
                     }
                   >
-                    <span className="font-mono text-[9px] opacity-75 tracking-wider">{n.no}</span>
+                    <span className="font-mono text-[9px] opacity-75 tracking-wider">
+                      {n.no}
+                    </span>
                     <span>{t(n.key)}</span>
                   </NavLink>
                 ))}
@@ -87,19 +100,38 @@ export default function App() {
 
         {/* ============ 版面 ============ */}
         <main className="relative mx-auto w-full max-w-6xl flex-1 px-6 py-8">
-          <span className="regmark hidden md:block left-0.5 top-1" aria-hidden="true" />
-          <span className="regmark hidden md:block right-0.5 top-1" aria-hidden="true" />
-          <span className="regmark hidden md:block left-0.5 bottom-1" aria-hidden="true" />
-          <span className="regmark hidden md:block right-0.5 bottom-1" aria-hidden="true" />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/interview" element={<InterviewPage />} />
-            <Route path="/interview/:sid" element={<InterviewPage />} />
-            <Route path="/resume" element={<ResumePage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/intel" element={<IntelPage />} />
-            <Route path="/intel/:rid" element={<IntelPage />} />
-          </Routes>
+          <span
+            className="regmark hidden md:block left-0.5 top-1"
+            aria-hidden="true"
+          />
+          <span
+            className="regmark hidden md:block right-0.5 top-1"
+            aria-hidden="true"
+          />
+          <span
+            className="regmark hidden md:block left-0.5 bottom-1"
+            aria-hidden="true"
+          />
+          <span
+            className="regmark hidden md:block right-0.5 bottom-1"
+            aria-hidden="true"
+          />
+          <Suspense fallback={<LoadingRows />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/interview" element={<InterviewPage />} />
+              <Route path="/interview/:sid" element={<InterviewPage />} />
+              <Route path="/resume" element={<ResumePage />} />
+              <Route path="/resume/print/:vid" element={<ResumePrintPage />} />
+              <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/jobs/:jid" element={<JobsPage />} />
+              <Route path="/experiences" element={<ExperiencePage />} />
+              <Route path="/practice" element={<PracticePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/intel" element={<IntelPage />} />
+              <Route path="/intel/:rid" element={<IntelPage />} />
+            </Routes>
+          </Suspense>
         </main>
 
         {/* ============ 版权页 ============ */}

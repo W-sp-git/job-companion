@@ -21,7 +21,9 @@ def get_llm(
     if provider not in PROVIDER_REGISTRY:
         raise ValueError(f"未知 provider：{provider}（任务 {task}）")
     if task == "ocr" and provider not in VISION_PROVIDERS:
-        raise ValueError(f"ocr 任务需要视觉模型（{sorted(VISION_PROVIDERS)}），当前为 {provider}")
+        raise ValueError(
+            f"ocr 任务需要视觉模型（{sorted(VISION_PROVIDERS)}），当前为 {provider}"
+        )
 
     api_key = settings.provider_key(provider)
     if not api_key:
@@ -33,6 +35,8 @@ def get_llm(
         "base_url": PROVIDER_REGISTRY[provider]["base_url"],
         "temperature": temperature,
         "streaming": streaming,
+        "timeout": settings.llm_timeout_seconds,
+        "max_retries": 1,
     }
     if max_tokens is not None:
         kwargs["max_tokens"] = max_tokens

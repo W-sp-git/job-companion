@@ -13,7 +13,12 @@ DEFAULT_USER = "default"
 
 @router.get("")
 async def list_memories(user_id: str = DEFAULT_USER) -> dict:
-    memories = await memory_manager.aall_memories(user_id)
+    try:
+        memories = await memory_manager.aall_memories(user_id)
+    except Exception as exc:
+        raise HTTPException(
+            503, "长期记忆暂不可用，档案与经历素材仍可正常使用"
+        ) from exc
     return {"memories": memories}
 
 

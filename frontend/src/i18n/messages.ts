@@ -7,9 +7,14 @@ export const zh = {
   "nav.resume": "简历优化",
   "nav.profile": "我的档案",
   "nav.intel": "情报处",
+  "nav.jobs": "岗位工作台",
+  "nav.experiences": "经历素材",
+  "nav.practice": "专项训练",
+  "chat.feedbackAtEnd":
+    "本场采用模拟模式，评分和改进建议将在面试结束后集中展示。",
   "app.slogan": "JOB COMPANION · EST.2026",
   "footer.left": "求职搭子 · 大学生校招作战档案",
-  "footer.right": "LOCAL-FIRST · 数据只留在你的电脑",
+  "footer.right": "本地保存 · AI 分析使用配置的模型服务",
 
   // ---------- 通用 ----------
   "common.loading": "加载中…",
@@ -71,14 +76,16 @@ export const zh = {
   "home.contents": "目录",
   "home.contents.en": "CONTENTS · 03 ENTRIES",
   "home.entry1.title": "模拟面试官",
-  "home.entry1.desc": "四种模式多轮对话：开场契约、动态追问、逐题打分、复盘报告；跨会话记住你的弱点。",
+  "home.entry1.desc":
+    "四种模式多轮对话：开场契约、动态追问、逐题打分、复盘报告；跨会话记住你的弱点。",
   "home.entry1.en": "MOCK INTERVIEW",
   "home.entry2.title": "简历解析与优化",
   "home.entry2.desc":
     "上传 PDF / 照片自动解析为结构化档案；起草-审查双 Agent 循环，ATS 关键词对齐，绝不虚构经历。",
   "home.entry2.en": "RESUME LAB",
   "home.entry3.title": "我的档案与记忆",
-  "home.entry3.desc": "专业背景、目标岗位写入长期记忆，面试出题与简历优化都会读取它，越用越懂你。",
+  "home.entry3.desc":
+    "专业背景、目标岗位写入长期记忆，面试出题与简历优化都会读取它，越用越懂你。",
   "home.entry3.en": "MY DOSSIER",
   "home.enter": "进入 →",
   "home.recent": "近期战绩",
@@ -91,7 +98,8 @@ export const zh = {
   // ---------- 面试页 ----------
   "interview.setup.eyebrow": "Mock Interview · 登记表",
   "interview.setup.title": "安排一场模拟面试",
-  "interview.setup.desc": "面试官会先播报契约并出第 1 题；回答含糊时会被追问，全程自动评分。",
+  "interview.setup.desc":
+    "面试官会先播报契约并出第 1 题；回答含糊时会被追问，全程自动评分。",
   "interview.setup.mode": "面试模式",
   "interview.setup.rounds": "主题目数量",
   "interview.setup.rounds.unit": "道题",
@@ -161,7 +169,8 @@ export const zh = {
   // ---------- 简历页 ----------
   "resume.intake.eyebrow": "Resume Intake · 投递口",
   "resume.intake.title": "简历解析",
-  "resume.intake.desc": "支持 PDF（文本层自动识别；扫描件/照片走视觉模型）与图片；解析结果忠实原文，不加工。",
+  "resume.intake.desc":
+    "支持 PDF（文本层自动识别；扫描件/照片走视觉模型）与图片；解析结果忠实原文，不加工。",
   "resume.intake.stamp": "解档",
   "resume.intake.parsing": "解析中…",
   "resume.intake.upload": "上传简历文件",
@@ -229,6 +238,10 @@ export const zh = {
   "profile.field.city.placeholder": "如：杭州",
   "profile.field.skills": "技能",
   "profile.field.skills.placeholder": "如：Java、Spring Boot、MySQL",
+  "profile.field.graduation": "毕业时间",
+  "profile.field.graduation.placeholder": "如：2027 年 6 月",
+  "profile.field.availability": "到岗安排",
+  "profile.field.availability.placeholder": "如：每周 4 天，至少 3 个月",
   "profile.save": "保存档案",
   "profile.saved": "已保存，记忆同步中…",
   "profile.memory.title": "长期记忆",
@@ -243,7 +256,8 @@ export const zh = {
   "stats.title": "战绩归档",
   "stats.stamp": "战报",
   "stats.loading": "正在调档…",
-  "stats.empty": "还没有战绩：完成一场模拟面试后，这里会自动归档成绩曲线与短板清单。",
+  "stats.empty":
+    "还没有战绩：完成一场模拟面试后，这里会自动归档成绩曲线与短板清单。",
   "stats.sessions": "累计场次",
   "stats.sessions.unit": "场",
   "stats.questions": "累计答题",
@@ -308,7 +322,7 @@ export const zh = {
   "intel.brief.role": "岗位 {role}",
   "intel.brief.sources": "来源 {n} 条",
   "intel.brief.summaryEmpty": "（核要生成失败）",
-  "intel.brief.verified": "防虚构校验 {ok}/{total} 条有公开来源佐证",
+  "intel.brief.verified": "{ok}/{total} 条已检查所引摘录与数字",
   "intel.brief.s1": "一 · 公司基本面",
   "intel.brief.s2": "二 · 在招岗位与趋势",
   "intel.brief.s3": "三 · 薪资待遇",
@@ -321,9 +335,11 @@ export const zh = {
   "intel.brief.noHiring": "未检索到明确的在招岗位信息。",
   "intel.brief.noSalary": "公开来源中没有可引用的薪资数据。",
   "intel.brief.noProcess": "未检索到面试流程与面经信息。",
-  "intel.brief.noRisk": "本次检索未发现公开负面信号（不代表该公司无相关风险）。",
+  "intel.brief.noRisk":
+    "本次检索未发现公开负面信号（不代表该公司无相关风险）。",
   "intel.brief.disclaimer": "本节仅为公开信息摘录，不构成任何评价或建议。",
-  "intel.brief.verifyLine": "防虚构校验 {ok}/{total} 条 · 检索来源 {evidence} 条",
+  "intel.brief.verifyLine":
+    "引用规则检查 {ok}/{total} 条 · 检索来源 {evidence} 条",
   "intel.brief.verifyDropped": " · 剔除 {n} 条无来源风险线索",
   "intel.brief.toInterview": "带这份情报去模拟面试",
   "intel.brief.toInterviewHint": "背调时未指定岗位，无法带情报去面试",
@@ -341,9 +357,14 @@ export const en: Record<keyof typeof zh, string> = {
   "nav.resume": "Resume",
   "nav.profile": "Profile",
   "nav.intel": "Intel Desk",
+  "nav.jobs": "Opportunities",
+  "nav.experiences": "Experiences",
+  "nav.practice": "Practice",
+  "chat.feedbackAtEnd":
+    "Simulation mode: scores and suggestions will be shown when the interview ends.",
   "app.slogan": "JOB COMPANION · EST.2026",
   "footer.left": "Job Companion · Campus Recruiting War Room",
-  "footer.right": "LOCAL-FIRST · Your data stays on your machine",
+  "footer.right": "Saved locally · AI analysis uses configured model services",
 
   // ---------- 通用 ----------
   "common.loading": "Loading…",
@@ -373,7 +394,8 @@ export const en: Record<keyof typeof zh, string> = {
 
   // ---------- 面试阶段 ----------
   "stage.recalling": "Recalling your profile and long-term memory…",
-  "stage.searching_company": "Researching {company} — background and job requirements…",
+  "stage.searching_company":
+    "Researching {company} — background and job requirements…",
   "stage.opening": "The interviewer has entered",
   "stage.evaluated": "Question {round} scored",
   "stage.probe": "The interviewer is digging deeper…",
@@ -381,7 +403,8 @@ export const en: Record<keyof typeof zh, string> = {
   "stage.reporting": "Generating the review report…",
   "stage.drafting": "Drafting resume (rewriting within factual boundaries)…",
   "stage.reviewing": "Independent review (ATS coverage + anti-fabrication)…",
-  "stage.reviewed": "Review done: {issues} issues, {missing} ATS keywords missing",
+  "stage.reviewed":
+    "Review done: {issues} issues, {missing} ATS keywords missing",
   "stage.refining": "Refinement round {iteration}…",
   "stage.finalizing": "Finalizing…",
   "stage.lane_hiring": "Searching hiring activity…",
@@ -391,7 +414,8 @@ export const en: Record<keyof typeof zh, string> = {
   "stage.extract": "Collected {count} sources, extracting structure…",
   "stage.verify": "Anti-fabrication check: comparing against sources…",
   "stage.save": "Archiving…",
-  "stage.failed_no_source": "No public sources found — cannot build the report (try again later)",
+  "stage.failed_no_source":
+    "No public sources found — cannot build the report (try again later)",
 
   // ---------- 首页 ----------
   "home.masthead.a": "ISSUE № 001",
@@ -400,8 +424,10 @@ export const en: Record<keyof typeof zh, string> = {
   "home.stamp.campus": "CAMPUS",
   "home.banner": "THE JOB COMPANION",
   "home.title": "Job Companion",
-  "home.tagline.a": "Mock interviews · Resume polish · Company intel · Long-term memory",
-  "home.tagline.b": "From “no idea how to write a resume” to owning every campus interview.",
+  "home.tagline.a":
+    "Mock interviews · Resume polish · Company intel · Long-term memory",
+  "home.tagline.b":
+    "From “no idea how to write a resume” to owning every campus interview.",
   "home.contents": "Contents",
   "home.contents.en": "CONTENTS · 03 ENTRIES",
   "home.entry1.title": "Mock Interviewer",
@@ -435,9 +461,11 @@ export const en: Record<keyof typeof zh, string> = {
   "interview.setup.rounds.range": "3–12",
   "interview.setup.role": "Target Role",
   "interview.setup.role.placeholder": "e.g. Backend Engineer",
-  "interview.setup.company": "Company (optional — enables web research on background & interview reports)",
+  "interview.setup.company":
+    "Company (optional — enables web research on background & interview reports)",
   "interview.setup.company.placeholder": "e.g. ByteDance",
-  "interview.setup.jd": "Job Description (optional — makes questions more on-target)",
+  "interview.setup.jd":
+    "Job Description (optional — makes questions more on-target)",
   "interview.setup.jd.placeholder": "Paste the job description here…",
   "interview.setup.need_role": "Please fill in the target role",
   "interview.setup.starting": "Arranging the interviewer…",
@@ -464,8 +492,10 @@ export const en: Record<keyof typeof zh, string> = {
   "chat.dossier.restart": "Start Over",
   "chat.transcript": "Transcript",
   "chat.transcript.preparing": "The interviewer is preparing…",
-  "chat.input.placeholder": "Type your answer (Enter to send, Shift+Enter for newline)",
-  "chat.input.placeholder.finished": "Interview finished — check the review report",
+  "chat.input.placeholder":
+    "Type your answer (Enter to send, Shift+Enter for newline)",
+  "chat.input.placeholder.finished":
+    "Interview finished — check the review report",
   "chat.send": "Send",
   "chat.stop": "Stop",
   "chat.scores": "Red-pen Grading",
@@ -478,7 +508,8 @@ export const en: Record<keyof typeof zh, string> = {
   "report.eyebrow": "Post-Interview Review",
   "report.title": "Interview Review Report",
   "report.stamp.reviewed": "READ",
-  "report.desc": "Automatic analysis based on per-question scores and overall performance",
+  "report.desc":
+    "Automatic analysis based on per-question scores and overall performance",
   "report.overall": "Overall / 100",
   "report.strengths": "STRENGTHS",
   "report.weaknesses": "TO IMPROVE",
@@ -516,7 +547,8 @@ export const en: Record<keyof typeof zh, string> = {
   "resume.target.role": "Target Role",
   "resume.target.company": "Company (optional, real web research)",
   "resume.target.company.placeholder": "e.g. ByteDance",
-  "resume.target.jd": "Job Description (optional, enables ATS keyword alignment)",
+  "resume.target.jd":
+    "Job Description (optional, enables ATS keyword alignment)",
   "resume.target.jd.placeholder": "Paste the job description…",
   "resume.target.optimizing": "Optimizing (draft → review → refine)…",
   "resume.target.start": "Start Polishing",
@@ -530,9 +562,11 @@ export const en: Record<keyof typeof zh, string> = {
   "resume.proof.skills": "Skills",
   "resume.proof.internships": "Internships",
   "resume.proof.projects": "Projects",
-  "resume.proof.gaps": "To be filled (required by JD, honestly marked as missing)",
+  "resume.proof.gaps":
+    "To be filled (required by JD, honestly marked as missing)",
   "resume.review.title": "Independent Review",
-  "resume.review.firstRound": "Issues found in the first review round (already addressed by the refinement loop):",
+  "resume.review.firstRound":
+    "Issues found in the first review round (already addressed by the refinement loop):",
   "resume.review.atsMissing": "Missing ATS keywords: {list}",
   "resume.review.factuality": "Anti-fabrication blocked: {list}",
   "resume.review.severity.high": "HIGH",
@@ -568,11 +602,17 @@ export const en: Record<keyof typeof zh, string> = {
   "profile.field.city.placeholder": "e.g. Hangzhou",
   "profile.field.skills": "Skills",
   "profile.field.skills.placeholder": "e.g. Java, Spring Boot, MySQL",
+  "profile.field.graduation": "Graduation date",
+  "profile.field.graduation.placeholder": "e.g. June 2027",
+  "profile.field.availability": "Availability",
+  "profile.field.availability.placeholder":
+    "e.g. 4 days/week, at least 3 months",
   "profile.save": "Save Profile",
   "profile.saved": "Saved, syncing to memory…",
   "profile.memory.title": "Long-term Memory",
   "profile.memory.hint": "Works across sessions; delete entries individually.",
-  "profile.memory.empty": "No memories yet — run an interview or save your profile.",
+  "profile.memory.empty":
+    "No memories yet — run an interview or save your profile.",
   "profile.memory.type.profile": "Profile",
   "profile.memory.type.weakness": "Weakness",
   "profile.memory.type.general": "General",
@@ -597,7 +637,8 @@ export const en: Record<keyof typeof zh, string> = {
   "stats.singleHint": "finish a second one to see the trend",
   "stats.weakness.title": "Weakness Ledger",
   "stats.weakness.clustering": "Merging past weaknesses…",
-  "stats.weakness.unavailable": "Weakness digest temporarily unavailable — refresh later.",
+  "stats.weakness.unavailable":
+    "Weakness digest temporarily unavailable — refresh later.",
   "stats.weakness.empty": "No weaknesses recorded yet.",
   "stats.weakness.high": "HIGH",
   "stats.weakness.recur": "AGAIN",
@@ -619,10 +660,12 @@ export const en: Record<keyof typeof zh, string> = {
   "intel.desk.archived": "Existing report on {company} ({date}):",
   "intel.desk.review": "view it",
   "intel.desk.archivedTail": ", or run a fresh one for the latest intel.",
-  "intel.desk.interrupted": "Commission #{id} is incomplete — you can resume it.",
+  "intel.desk.interrupted":
+    "Commission #{id} is incomplete — you can resume it.",
   "intel.desk.resume": "Resume",
   "intel.archive.title": "Intel Archive",
-  "intel.archive.empty": "No archives yet — a generated brief will be filed here.",
+  "intel.archive.empty":
+    "No archives yet — a generated brief will be filed here.",
   "intel.archive.no": "NO. {no} · {date}",
   "intel.archive.sources": "{n} sources",
   "intel.archive.status.done": "Done",
@@ -648,7 +691,7 @@ export const en: Record<keyof typeof zh, string> = {
   "intel.brief.role": "Role {role}",
   "intel.brief.sources": "{n} sources",
   "intel.brief.summaryEmpty": "(summary generation failed)",
-  "intel.brief.verified": "Sanity check {ok}/{total} claims sourced",
+  "intel.brief.verified": "Cited excerpts and numbers checked: {ok}/{total}",
   "intel.brief.s1": "1 · Company Basics",
   "intel.brief.s2": "2 · Open Roles & Trends",
   "intel.brief.s3": "3 · Compensation",
@@ -660,14 +703,17 @@ export const en: Record<keyof typeof zh, string> = {
   "intel.brief.noHiring": "No clear open-role information found.",
   "intel.brief.noSalary": "No citable salary data in public sources.",
   "intel.brief.noProcess": "No interview process information found.",
-  "intel.brief.noRisk": "No public negative signals found (this does not mean there are none).",
+  "intel.brief.noRisk":
+    "No public negative signals found (this does not mean there are none).",
   "intel.brief.disclaimer":
     "This section quotes public information only; it constitutes no evaluation or advice.",
   "intel.brief.appendix": "A · Sources",
-  "intel.brief.verifyLine": "Sanity check {ok}/{total} claims · {evidence} sources",
+  "intel.brief.verifyLine":
+    "Citation rules checked: {ok}/{total} claims · {evidence} sources",
   "intel.brief.verifyDropped": " · dropped {n} unsourced risk leads",
   "intel.brief.toInterview": "Take this intel to a mock interview",
-  "intel.brief.toInterviewHint": "No role was specified — cannot prefill an interview",
+  "intel.brief.toInterviewHint":
+    "No role was specified — cannot prefill an interview",
   "intel.brief.again": "Run Again",
 
   // ---------- 错误提示 ----------

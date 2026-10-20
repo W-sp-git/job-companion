@@ -8,6 +8,12 @@ export type SessionInfo = {
   status: string;
   created_at: string;
   total_score?: number | null;
+  context?: {
+    job_id?: number;
+    resume_version_id?: number;
+    feedback_mode?: string;
+    locale?: string;
+  };
 };
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -84,6 +90,7 @@ export type ResumeDraft = {
   projects: ProjectItem[];
   awards: string[];
   target_gaps: string[];
+  other?: string[];
 };
 
 export type ReviewIssue = {
@@ -93,7 +100,11 @@ export type ReviewIssue = {
   suggestion: string;
 };
 
-export type FactualityViolation = { type: string; value: string; reason: string };
+export type FactualityViolation = {
+  type: string;
+  value: string;
+  reason: string;
+};
 
 export type ReviewReport = {
   overall: string;
@@ -119,6 +130,15 @@ export type ResumeVersion = {
   review_json: ReviewReport | null;
   docx_path: string | null;
   created_at: string;
+  context?: {
+    job_id?: number;
+    company?: string;
+    target_role?: string;
+    jd_text?: string;
+    label?: string;
+    review_acknowledged?: boolean;
+  };
+  export_issues?: FactualityViolation[];
 };
 
 export type CreatePayload = {
@@ -127,6 +147,11 @@ export type CreatePayload = {
   jd_text?: string;
   company?: string;
   max_rounds: number;
+  job_id?: number;
+  resume_version_id?: number;
+  intel_report_id?: number;
+  locale?: "zh" | "en";
+  feedback_mode?: "coaching" | "simulation";
 };
 
 export type StatsTrendPoint = {
@@ -155,11 +180,22 @@ export type WeaknessTheme = { theme: string; count: number; last_seen: string };
 
 export type WeaknessClusters = { clustered: boolean; themes: WeaknessTheme[] };
 
-export type IntelSource = { sid: number; lane: string; title: string; url: string; date?: string };
+export type IntelSource = {
+  sid: number;
+  lane: string;
+  title: string;
+  url: string;
+  date?: string;
+};
 
 export type ClaimStatus = "verified" | "unverified";
 
-export type IntelClaim = { text: string; status: ClaimStatus; sources: IntelSource[] };
+export type IntelClaim = {
+  text: string;
+  status: ClaimStatus;
+  sources: IntelSource[];
+  evidence_quote?: string;
+};
 
 export type IntelHiring = {
   position: string;
@@ -167,6 +203,7 @@ export type IntelHiring = {
   trend: string;
   status: ClaimStatus;
   sources: IntelSource[];
+  evidence_quote?: string;
 };
 
 export type IntelSalary = {
@@ -175,6 +212,7 @@ export type IntelSalary = {
   notes: string;
   status: ClaimStatus;
   sources: IntelSource[];
+  evidence_quote?: string;
 };
 
 export type IntelProcessStage = {
@@ -182,9 +220,15 @@ export type IntelProcessStage = {
   detail: string;
   status: ClaimStatus;
   sources: IntelSource[];
+  evidence_quote?: string;
 };
 
-export type IntelRisk = { category: string; text: string; sources: IntelSource[] };
+export type IntelRisk = {
+  category: string;
+  text: string;
+  sources: IntelSource[];
+  evidence_quote?: string;
+};
 
 export type IntelReport = {
   company: string;
@@ -228,4 +272,109 @@ export type IntelReportMeta = {
   error: string;
   created_at: string;
   finished_at: string | null;
+};
+
+export type JobStatus =
+  | "saved"
+  | "preparing"
+  | "applied"
+  | "assessment"
+  | "interview"
+  | "offer"
+  | "rejected"
+  | "withdrawn";
+export type JobAnalysis = {
+  summary: string;
+  requirements: {
+    requirement: string;
+    category: string;
+    status: "supported" | "gap" | "unknown";
+    evidence_id: string;
+    evidence_quote: string;
+    evidence_quotes?: string[];
+    evidence_label: string;
+    explanation: string;
+    next_action: string;
+  }[];
+  preparation: string[];
+  questions_to_ask: string[];
+  analyzed_at?: string;
+};
+export type Job = {
+  id: number;
+  company: string;
+  target_role: string;
+  city: string;
+  batch: string;
+  jd_text: string;
+  source_url: string;
+  deadline: string;
+  status: JobStatus;
+  next_action: string;
+  action_date: string;
+  notes: string;
+  resume_version_id: number | null;
+  intel_report_id: number | null;
+  analysis_json: Partial<JobAnalysis>;
+  analysis_stale?: boolean;
+  activities?: JobActivity[];
+  sessions?: SessionInfo[];
+  updated_at: string;
+};
+export type JobActivity = {
+  id: number;
+  kind: string;
+  content: string;
+  details_json: Record<string, string>;
+  created_at: string;
+};
+export type ExperienceFact = {
+  id: number;
+  title: string;
+  kind: "project" | "internship" | "education" | "activity";
+  organization: string;
+  role: string;
+  situation: string;
+  action: string;
+  result: string;
+  skills: string[];
+  source: string;
+  confirmed: boolean;
+  updated_at: string;
+};
+export type PracticeAttempt = {
+  id: number;
+  answer: string;
+  score: number;
+  created_at: string;
+  evaluation_json: {
+    criteria: {
+      criterion_index: number;
+      criterion: string;
+      score: number;
+      evidence_quote: string;
+      feedback: string;
+    }[];
+    next_step: string;
+    reference_outline: string;
+  };
+};
+export type PracticeTask = {
+  id: number;
+  job_id: number | null;
+  session_id: string;
+  skill: string;
+  question: string;
+  rubric_json: string[];
+  source_text: string;
+  status: string;
+  due_date: string;
+  attempts: PracticeAttempt[];
+};
+export type ResumeFile = {
+  id: number;
+  filename: string;
+  raw_json: ResumeRaw;
+  created_at: string;
+  versions?: ResumeVersion[];
 };

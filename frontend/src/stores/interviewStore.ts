@@ -3,13 +3,24 @@ import { create } from "zustand";
 import { api } from "@/api/client";
 import { createSSEStream } from "@/api/sse";
 import { stageLabel, translate } from "@/i18n";
-import type { ChatMessage, CreatePayload, Evaluation, InterviewReport, SessionInfo } from "@/api/types";
+import type {
+  ChatMessage,
+  CreatePayload,
+  Evaluation,
+  InterviewReport,
+  SessionInfo,
+} from "@/api/types";
 
 type Stage = { label: string } | null;
 
 type SessionDetail = {
   session: SessionInfo;
-  turns: { round: number; question: string; answer: string; evaluation: Evaluation | null }[];
+  turns: {
+    round: number;
+    question: string;
+    answer: string;
+    evaluation: Evaluation | null;
+  }[];
   messages: ChatMessage[];
 };
 
@@ -59,7 +70,10 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
                   newAssistant = false;
                 } else {
                   const last = msgs[msgs.length - 1];
-                  msgs[msgs.length - 1] = { ...last, content: last.content + delta };
+                  msgs[msgs.length - 1] = {
+                    ...last,
+                    content: last.content + delta,
+                  };
                 }
                 set({ messages: msgs, stage: null });
                 break;
@@ -74,7 +88,9 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
                 set({
                   stage: {
                     label: translate("error.prefix", {
-                      message: String(d.message ?? translate("common.unknownError")),
+                      message: String(
+                        d.message ?? translate("common.unknownError"),
+                      ),
                     }),
                   },
                 });
@@ -91,7 +107,9 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
             set({
               isStreaming: false,
               controller: null,
-              stage: { label: translate("error.connect", { message: String(err) }) },
+              stage: {
+                label: translate("error.connect", { message: String(err) }),
+              },
             }),
         },
       ),
@@ -109,10 +127,14 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
     controller: null,
 
     loadSession: async (sid: string) => {
-      const detail = await api.get<SessionDetail>(`/api/interview/sessions/${sid}`);
+      const detail = await api.get<SessionDetail>(
+        `/api/interview/sessions/${sid}`,
+      );
       let report: InterviewReport | null = null;
       try {
-        const r = await api.get<{ report: InterviewReport }>(`/api/interview/sessions/${sid}/report`);
+        const r = await api.get<{ report: InterviewReport }>(
+          `/api/interview/sessions/${sid}/report`,
+        );
         report = r.report;
       } catch {
         report = null;
@@ -121,7 +143,9 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
         sessionId: sid,
         session: detail.session,
         messages: detail.messages,
-        scores: detail.turns.map((t) => t.evaluation).filter((e): e is Evaluation => !!e),
+        scores: detail.turns
+          .map((t) => t.evaluation)
+          .filter((e): e is Evaluation => !!e),
         report,
         stage: null,
         isStreaming: false,
@@ -130,18 +154,16 @@ export const useInterviewStore = create<InterviewStore>((set, get) => {
     },
 
     createAndStart: async (payload: CreatePayload) => {
-      const { session_id } = await api.post<{ session_id: string }>("/api/interview/sessions", payload);
+      const { session_id } = await api.post<{ session_id: string }>(
+        "/api/interview/sessions",
+        payload,
+      );
+      const detail = await api.get<SessionDetail>(
+        `/api/interview/sessions/${session_id}`,
+      );
       set({
         sessionId: session_id,
-        session: {
-          id: session_id,
-          mode: payload.mode,
-          target_role: payload.target_role,
-          company: payload.company,
-          max_rounds: payload.max_rounds,
-          status: "created",
-          created_at: new Date().toISOString(),
-        },
+        session: detail.session,
         messages: [],
         scores: [],
         report: null,

@@ -3,20 +3,63 @@ import { useEffect, useState } from "react";
 import { api } from "@/api/client";
 import type { MemoryItem } from "@/api/types";
 import StatsPanel from "@/components/StatsPanel";
+import DataManagement from "@/components/DataManagement";
+import { ErrorNotice, useCopy } from "@/components/workspace";
 import { Badge, Button, Card, Field, Stamp, inputCls } from "@/components/ui";
 import { useT } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 
-const PROFILE_FIELDS: { key: string; label: MessageKey; placeholder: MessageKey }[] = [
-  { key: "school", label: "profile.field.school", placeholder: "profile.field.school.placeholder" },
-  { key: "major", label: "profile.field.major", placeholder: "profile.field.major.placeholder" },
-  { key: "grade", label: "profile.field.grade", placeholder: "profile.field.grade.placeholder" },
-  { key: "target_role", label: "profile.field.role", placeholder: "profile.field.role.placeholder" },
-  { key: "target_city", label: "profile.field.city", placeholder: "profile.field.city.placeholder" },
-  { key: "skills", label: "profile.field.skills", placeholder: "profile.field.skills.placeholder" },
+const PROFILE_FIELDS: {
+  key: string;
+  label: MessageKey;
+  placeholder: MessageKey;
+}[] = [
+  {
+    key: "school",
+    label: "profile.field.school",
+    placeholder: "profile.field.school.placeholder",
+  },
+  {
+    key: "major",
+    label: "profile.field.major",
+    placeholder: "profile.field.major.placeholder",
+  },
+  {
+    key: "grade",
+    label: "profile.field.grade",
+    placeholder: "profile.field.grade.placeholder",
+  },
+  {
+    key: "target_role",
+    label: "profile.field.role",
+    placeholder: "profile.field.role.placeholder",
+  },
+  {
+    key: "target_city",
+    label: "profile.field.city",
+    placeholder: "profile.field.city.placeholder",
+  },
+  {
+    key: "skills",
+    label: "profile.field.skills",
+    placeholder: "profile.field.skills.placeholder",
+  },
+  {
+    key: "graduation",
+    label: "profile.field.graduation",
+    placeholder: "profile.field.graduation.placeholder",
+  },
+  {
+    key: "availability",
+    label: "profile.field.availability",
+    placeholder: "profile.field.availability.placeholder",
+  },
 ];
 
-const TYPE_META: Record<string, { label: MessageKey; tone: "green" | "amber" | "blue" | "neutral" }> = {
+const TYPE_META: Record<
+  string,
+  { label: MessageKey; tone: "green" | "amber" | "blue" | "neutral" }
+> = {
   profile: { label: "profile.memory.type.profile", tone: "blue" },
   weakness: { label: "profile.memory.type.weakness", tone: "amber" },
   general: { label: "profile.memory.type.general", tone: "neutral" },
@@ -24,52 +67,72 @@ const TYPE_META: Record<string, { label: MessageKey; tone: "green" | "amber" | "
 
 export default function ProfilePage() {
   const { t } = useT();
+  const c = useCopy();
   const [form, setForm] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [loadingMem, setLoadingMem] = useState(false);
+  const [memoryError, setMemoryError] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api
       .get<{ profile: Record<string, string> }>("/api/profile")
       .then((r) => setForm(r.profile || {}))
-      .catch(() => {});
+      .catch((e) => setError(String(e)));
     refreshMemories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function refreshMemories() {
     setLoadingMem(true);
+    setMemoryError("");
     api
       .get<{ memories: MemoryItem[] }>("/api/memories")
       .then((r) => setMemories(r.memories))
-      .catch(() => {})
+      .catch(() =>
+        setMemoryError(
+          c(
+            "长期记忆暂不可用，档案与经历素材仍可正常使用。",
+            "Memory is temporarily unavailable. Profile and experience facts remain available.",
+          ),
+        ),
+      )
       .finally(() => setLoadingMem(false));
   }
 
   async function save() {
     setSaving(true);
+    setError("");
     try {
-      const patch = Object.fromEntries(
-        Object.entries(form).filter(([, v]) => String(v).trim() !== ""),
-      );
-      await api.put("/api/profile", { patch });
+      await api.put("/api/profile", { patch: form });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       setTimeout(refreshMemories, 5000); // 记忆提取是后台任务
+    } catch (e) {
+      setError(String(e));
     } finally {
       setSaving(false);
     }
   }
 
   async function removeMemory(id: string) {
-    await api.del(`/api/memories/${id}`);
-    setMemories((ms) => ms.filter((m) => m.id !== id));
+    try {
+      await api.del(`/api/memories/${id}`);
+      setMemories((ms) => ms.filter((m) => m.id !== id));
+    } catch (e) {
+      setError(String(e));
+    }
   }
 
   return (
     <div className="grid lg:grid-cols-2 gap-7 max-w-5xl mx-auto">
+      {error && (
+        <div className="lg:col-span-2">
+          <ErrorNotice message={error} />
+        </div>
+      )}
       {/* ============ 人事档案卡 ============ */}
       <Card
         className="p-6 space-y-5 animate-ink-up"
@@ -78,7 +141,9 @@ export default function ProfilePage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="eyebrow mb-2">{t("profile.dossier.eyebrow")}</div>
-            <h2 className="font-display text-2xl font-black tracking-wide">{t("profile.dossier.title")}</h2>
+            <h2 className="font-display text-2xl font-black tracking-wide">
+              {t("profile.dossier.title")}
+            </h2>
           </div>
           <Stamp size="md" className="shrink-0">
             {t("profile.dossier.stamp")}
@@ -106,7 +171,9 @@ export default function ProfilePage() {
             {saving ? t("common.saving") : t("profile.save")}
           </Button>
           {saved && (
-            <span className="font-kai text-sm text-moss animate-pop-in">{t("profile.saved")}</span>
+            <span className="font-kai text-sm text-moss animate-pop-in">
+              {t("profile.saved")}
+            </span>
           )}
         </div>
       </Card>
@@ -114,7 +181,9 @@ export default function ProfilePage() {
       {/* ============ 记忆索引卡 ============ */}
       <Card className="p-6 space-y-4 animate-ink-up [animation-delay:90ms]">
         <div className="flex items-end justify-between border-b-2 border-ink pb-2">
-          <h2 className="font-display text-xl font-black tracking-wide">{t("profile.memory.title")}</h2>
+          <h2 className="font-display text-xl font-black tracking-wide">
+            {t("profile.memory.title")}
+          </h2>
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline font-mono text-[10px] tracking-[0.22em] text-ink-faint">
               MEMORY INDEX
@@ -129,7 +198,10 @@ export default function ProfilePage() {
             </Button>
           </div>
         </div>
-        <p className="font-kai text-xs text-ink-soft">{t("profile.memory.hint")}</p>
+        <p className="font-kai text-xs text-ink-soft">
+          {t("profile.memory.hint")}
+        </p>
+        <ErrorNotice message={memoryError} retry={refreshMemories} />
 
         <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1 stagger">
           {memories.map((m) => {
@@ -154,13 +226,16 @@ export default function ProfilePage() {
             );
           })}
           {!memories.length && !loadingMem && (
-            <p className="font-kai text-sm text-ink-faint">{t("profile.memory.empty")}</p>
+            <p className="font-kai text-sm text-ink-faint">
+              {t("profile.memory.empty")}
+            </p>
           )}
         </div>
       </Card>
 
       {/* ============ 战绩归档卡 ============ */}
       <StatsPanel />
+      <DataManagement />
     </div>
   );
 }

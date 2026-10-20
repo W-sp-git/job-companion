@@ -1,12 +1,25 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import ScoreRadar from "@/components/ScoreRadar";
 import { Badge, Button, CountNumber, Stamp } from "@/components/ui";
 import { useT } from "@/i18n";
 import type { InterviewReport } from "@/api/types";
+import { useCopy } from "@/components/workspace";
 
-export default function ReportDrawer({ report, onClose }: { report: InterviewReport; onClose: () => void }) {
+export default function ReportDrawer({
+  report,
+  onClose,
+  sessionId,
+  jobId,
+}: {
+  report: InterviewReport;
+  onClose: () => void;
+  sessionId?: string;
+  jobId?: number;
+}) {
   const { t } = useT();
+  const c = useCopy();
   const [openQ, setOpenQ] = useState<number | null>(null);
   return (
     <div
@@ -17,16 +30,26 @@ export default function ReportDrawer({ report, onClose }: { report: InterviewRep
         className="relative w-full max-w-xl h-full overflow-y-auto bg-sheet border-l-2 border-ink p-6 space-y-6 animate-slide-in-right"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="tape top-3 left-1/2 -translate-x-1/2 w-28 rotate-[-2deg]" aria-hidden="true" />
-        <Stamp size="lg" className="absolute right-7 top-16 pointer-events-none">
+        <span
+          className="tape top-3 left-1/2 -translate-x-1/2 w-28 rotate-[-2deg]"
+          aria-hidden="true"
+        />
+        <Stamp
+          size="lg"
+          className="absolute right-7 top-16 pointer-events-none"
+        >
           {t("report.stamp.reviewed")}
         </Stamp>
 
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="eyebrow mb-1.5">{t("report.eyebrow")}</div>
-            <h2 className="font-display text-2xl font-black tracking-wide">{t("report.title")}</h2>
-            <p className="font-kai text-xs text-ink-soft mt-1.5">{t("report.desc")}</p>
+            <h2 className="font-display text-2xl font-black tracking-wide">
+              {t("report.title")}
+            </h2>
+            <p className="font-kai text-xs text-ink-soft mt-1.5">
+              {t("report.desc")}
+            </p>
           </div>
           <Button variant="ghost" onClick={onClose}>
             {t("common.close")}
@@ -72,6 +95,12 @@ export default function ReportDrawer({ report, onClose }: { report: InterviewRep
                 <li key={i} className="flex gap-2">
                   <span className="text-ochre shrink-0">△</span>
                   <span>{s}</span>
+                  <Link
+                    className="text-xs text-seal underline shrink-0 self-start"
+                    to={`/practice?${new URLSearchParams({ skill: s, source: s, ...(sessionId ? { session: sessionId } : {}), ...(jobId ? { job: String(jobId) } : {}) }).toString()}`}
+                  >
+                    {c("练习", "Practice")}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -79,10 +108,15 @@ export default function ReportDrawer({ report, onClose }: { report: InterviewRep
         </div>
 
         <div>
-          <h3 className="font-display text-base font-bold mb-2.5">{t("report.perQuestion")}</h3>
+          <h3 className="font-display text-base font-bold mb-2.5">
+            {t("report.perQuestion")}
+          </h3>
           <div className="space-y-2 stagger">
             {(report.per_question || []).map((q, i) => (
-              <div key={i} className="border border-rule-strong bg-sheet-bright rounded-[2px] overflow-hidden">
+              <div
+                key={i}
+                className="border border-rule-strong bg-sheet-bright rounded-[2px] overflow-hidden"
+              >
                 <button
                   className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-sm text-left hover:bg-paper-deep/50 transition-colors"
                   onClick={() => setOpenQ(openQ === i ? null : i)}
@@ -106,7 +140,9 @@ export default function ReportDrawer({ report, onClose }: { report: InterviewRep
                       <span className="font-mono text-[10px] tracking-[0.2em] text-moss">
                         {t("report.betterAnswer")}
                       </span>
-                      <p className="mt-1 whitespace-pre-wrap font-kai leading-6">{q.better_answer}</p>
+                      <p className="mt-1 whitespace-pre-wrap font-kai leading-6">
+                        {q.better_answer}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -116,7 +152,9 @@ export default function ReportDrawer({ report, onClose }: { report: InterviewRep
         </div>
 
         <div>
-          <h3 className="font-display text-base font-bold mb-2.5">{t("report.plan")}</h3>
+          <h3 className="font-display text-base font-bold mb-2.5">
+            {t("report.plan")}
+          </h3>
           <ol className="space-y-2">
             {(report.improvement_plan || []).map((s, i) => (
               <li key={i} className="flex gap-3 text-sm leading-6">

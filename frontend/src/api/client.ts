@@ -8,7 +8,12 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     let detail = `HTTP ${resp.status}`;
     try {
       const data = await resp.json();
-      detail = data.detail || detail;
+      detail =
+        typeof data.detail === "string"
+          ? data.detail
+          : Array.isArray(data.detail)
+            ? data.detail.map((item: { msg?: string }) => item.msg).join("；")
+            : detail;
     } catch {
       /* keep default */
     }
@@ -20,8 +25,12 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 export const api = {
   get: <T>(url: string) => request<T>(url),
   post: <T>(url: string, body?: unknown) =>
-    request<T>(url, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) }),
-  put: <T>(url: string, body: unknown) => request<T>(url, { method: "PUT", body: JSON.stringify(body) }),
+    request<T>(url, {
+      method: "POST",
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
+  put: <T>(url: string, body: unknown) =>
+    request<T>(url, { method: "PUT", body: JSON.stringify(body) }),
   del: <T>(url: string) => request<T>(url, { method: "DELETE" }),
   upload: <T>(url: string, file: File) => {
     const fd = new FormData();

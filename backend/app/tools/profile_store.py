@@ -21,6 +21,7 @@ from app.db.models import (
 
 # ---------- 学生档案 ----------
 
+
 def get_profile(user_id: str) -> dict:
     with get_session_factory()() as s:
         row = s.get(Student, user_id)
@@ -41,9 +42,14 @@ def upsert_profile(user_id: str, patch: dict) -> dict:
 
 # ---------- 简历 ----------
 
-def save_resume_file(user_id: str, filename: str, file_path: str, raw_json: dict) -> int:
+
+def save_resume_file(
+    user_id: str, filename: str, file_path: str, raw_json: dict
+) -> int:
     with get_session_factory()() as s:
-        row = Resume(user_id=user_id, filename=filename, file_path=file_path, raw_json=raw_json)
+        row = Resume(
+            user_id=user_id, filename=filename, file_path=file_path, raw_json=raw_json
+        )
         s.add(row)
         s.commit()
         return row.id
@@ -70,17 +76,24 @@ def save_resume_version(
     review_json: dict | None,
     docx_path: str | None = None,
     review_history: list | None = None,
+    context: dict | None = None,
 ) -> int:
     with get_session_factory()() as s:
-        count = s.scalar(
-            select(func.count()).select_from(ResumeVersion).where(ResumeVersion.resume_id == resume_id)
-        ) or 0
+        count = (
+            s.scalar(
+                select(func.count())
+                .select_from(ResumeVersion)
+                .where(ResumeVersion.resume_id == resume_id)
+            )
+            or 0
+        )
         row = ResumeVersion(
             resume_id=resume_id,
             version_no=count + 1,
             draft_json=draft_json,
             review_json=review_json,
             review_history=review_history,
+            context_json=context or {},
             docx_path=docx_path,
         )
         s.add(row)
@@ -111,6 +124,7 @@ def list_resume_versions(resume_id: int) -> list[dict]:
                 "draft_json": r.draft_json,
                 "review_json": r.review_json,
                 "review_history": r.review_history,
+                "context": r.context_json or {},
                 "docx_path": r.docx_path,
                 "created_at": r.created_at.isoformat(),
             }
@@ -130,12 +144,14 @@ def get_version(version_id: int) -> dict | None:
             "draft_json": row.draft_json,
             "review_json": row.review_json,
             "review_history": row.review_history,
+            "context": row.context_json or {},
             "docx_path": row.docx_path,
             "created_at": row.created_at.isoformat(),
         }
 
 
 # ---------- 面试会话 ----------
+
 
 def create_session(
     session_id: str,
@@ -145,6 +161,7 @@ def create_session(
     jd_text: str,
     max_rounds: int,
     company: str = "",
+    context: dict | None = None,
 ) -> None:
     with get_session_factory()() as s:
         s.add(
@@ -154,6 +171,7 @@ def create_session(
                 mode=mode,
                 target_role=target_role,
                 company=company,
+                context_json=context or {},
                 jd_text=jd_text,
                 max_rounds=max_rounds,
                 status="created",
@@ -184,6 +202,7 @@ def get_session(session_id: str) -> dict | None:
             "target_role": row.target_role,
             "company": row.company,
             "jd_text": row.jd_text,
+            "context": row.context_json or {},
             "max_rounds": row.max_rounds,
             "status": row.status,
             "created_at": row.created_at.isoformat(),
@@ -208,6 +227,8 @@ def list_sessions(user_id: str) -> list[dict]:
                     "id": r.id,
                     "mode": r.mode,
                     "target_role": r.target_role,
+                    "company": r.company,
+                    "context": r.context_json or {},
                     "status": r.status,
                     "max_rounds": r.max_rounds,
                     "created_at": r.created_at.isoformat(),
@@ -217,7 +238,9 @@ def list_sessions(user_id: str) -> list[dict]:
         return out
 
 
-def save_turn(session_id: str, round_no: int, question: str, answer: str, evaluation: dict | None) -> None:
+def save_turn(
+    session_id: str, round_no: int, question: str, answer: str, evaluation: dict | None
+) -> None:
     with get_session_factory()() as s:
         s.add(
             InterviewTurn(
@@ -249,7 +272,9 @@ def list_turns(session_id: str) -> list[dict]:
         ]
 
 
-def save_report(session_id: str, report_json: dict[str, Any], total_score: float) -> None:
+def save_report(
+    session_id: str, report_json: dict[str, Any], total_score: float
+) -> None:
     with get_session_factory()() as s:
         existing = s.scalar(
             select(InterviewReport).where(InterviewReport.session_id == session_id)
@@ -257,7 +282,9 @@ def save_report(session_id: str, report_json: dict[str, Any], total_score: float
         if existing is None:
             s.add(
                 InterviewReport(
-                    session_id=session_id, report_json=report_json, total_score=total_score
+                    session_id=session_id,
+                    report_json=report_json,
+                    total_score=total_score,
                 )
             )
         else:
@@ -268,7 +295,9 @@ def save_report(session_id: str, report_json: dict[str, Any], total_score: float
 
 def get_report(session_id: str) -> dict | None:
     with get_session_factory()() as s:
-        row = s.scalar(select(InterviewReport).where(InterviewReport.session_id == session_id))
+        row = s.scalar(
+            select(InterviewReport).where(InterviewReport.session_id == session_id)
+        )
         if row is None:
             return None
         return {"report": row.report_json, "total_score": row.total_score}
@@ -285,7 +314,9 @@ def get_interview_stats(user_id: str) -> dict:
             .join(InterviewReport, InterviewReport.session_id == InterviewSession.id)
             .where(InterviewSession.user_id == user_id)
             # 按完成时间排（有会话中途挂起、次日才跑完，用 created_at 会乱序）
-            .order_by(func.coalesce(InterviewSession.finished_at, InterviewSession.created_at))
+            .order_by(
+                func.coalesce(InterviewSession.finished_at, InterviewSession.created_at)
+            )
         ).all()
 
         trend: list[dict] = []
@@ -340,16 +371,24 @@ def collect_weaknesses(user_id: str) -> dict:
     """
     with get_session_factory()() as s:
         rows = s.execute(
-            select(InterviewReport.report_json, InterviewSession.finished_at, InterviewSession.created_at)
+            select(
+                InterviewReport.report_json,
+                InterviewSession.finished_at,
+                InterviewSession.created_at,
+            )
             .join(InterviewSession, InterviewSession.id == InterviewReport.session_id)
             .where(InterviewSession.user_id == user_id)
-            .order_by(func.coalesce(InterviewSession.finished_at, InterviewSession.created_at))
+            .order_by(
+                func.coalesce(InterviewSession.finished_at, InterviewSession.created_at)
+            )
         ).all()
 
-    seen: set[str] = set()
     items: list[dict] = []
     last_date = ""
     for rj, finished, created in rows:
+        seen: set[str] = (
+            set()
+        )  # De-duplicate within a session, preserve recurrence across sessions.
         date = (finished or created).isoformat()
         last_date = date
         for w in (rj or {}).get("weaknesses") or []:
@@ -361,11 +400,39 @@ def collect_weaknesses(user_id: str) -> dict:
     return {"fingerprint": f"{len(rows)}:{last_date}", "items": items}
 
 
+def list_resumes(user_id: str = "default") -> list[dict]:
+    with get_session_factory()() as s:
+        rows = s.scalars(
+            select(Resume).where(Resume.user_id == user_id).order_by(Resume.id.desc())
+        ).all()
+        return [
+            {
+                "id": r.id,
+                "filename": r.filename,
+                "raw_json": r.raw_json,
+                "created_at": r.created_at.isoformat(),
+            }
+            for r in rows
+        ]
+
+
+def update_raw_resume(resume_id: int, raw: dict) -> None:
+    with get_session_factory()() as s:
+        row = s.get(Resume, resume_id)
+        if row is None:
+            raise ValueError("简历不存在")
+        row.raw_json = raw
+        s.commit()
+
+
 # ---------- 公司背调存档 ----------
+
 
 def create_intel_report(user_id: str, company: str, target_role: str) -> int:
     with get_session_factory()() as s:
-        row = IntelReportRow(user_id=user_id, company=company, target_role=target_role, status="created")
+        row = IntelReportRow(
+            user_id=user_id, company=company, target_role=target_role, status="created"
+        )
         s.add(row)
         s.commit()
         return row.id
@@ -464,7 +531,9 @@ def list_intel_reports(user_id: str, limit: int = 20) -> list[dict]:
                     "target_role": r.target_role,
                     "status": r.status,
                     "source_count": r.source_count,
-                    "summary": (rj.get("report") or {}).get("summary", "") if r.status == "done" else "",
+                    "summary": (rj.get("report") or {}).get("summary", "")
+                    if r.status == "done"
+                    else "",
                     "error": r.error if r.status == "failed" else "",
                     "created_at": r.created_at.isoformat(),
                     "finished_at": r.finished_at.isoformat() if r.finished_at else None,

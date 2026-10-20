@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { CreatePayload, SessionInfo } from "@/api/types";
+import type { CreatePayload, Job, ResumeFile, SessionInfo } from "@/api/types";
 import ChatBubble from "@/components/ChatBubble";
 import ReportDrawer from "@/components/ReportDrawer";
 import ScorePanel from "@/components/ScorePanel";
@@ -21,8 +21,14 @@ import {
 import { modeLabel, useT } from "@/i18n";
 import type { MessageKey } from "@/i18n/messages";
 import { useInterviewStore } from "@/stores/interviewStore";
+import { useCopy, useResource, LoadingRows } from "@/components/workspace";
 
-const MODES: MessageKey[] = ["mode.behavioral", "mode.technical", "mode.project", "mode.pressure"];
+const MODES: MessageKey[] = [
+  "mode.behavioral",
+  "mode.technical",
+  "mode.project",
+  "mode.pressure",
+];
 const MODE_KEYS = ["behavioral", "technical", "project", "pressure"];
 
 export default function InterviewPage() {
@@ -36,7 +42,8 @@ export default function InterviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sid]);
 
-  if (!store.sessionId) return <SetupView />;
+  if (!sid) return <SetupView />;
+  if (store.sessionId !== sid) return <LoadingRows />;
   return <ChatView />;
 }
 
@@ -44,7 +51,8 @@ export default function InterviewPage() {
 function SetupView() {
   const store = useInterviewStore();
   const navigate = useNavigate();
-  const { t } = useT();
+  const { t, locale } = useT();
+  const c = useCopy();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState("technical");
   const [rounds, setRounds] = useState(6);
@@ -54,9 +62,30 @@ function SetupView() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const jobs = useResource<Job[]>("/api/jobs", []);
+  const library = useResource<ResumeFile[]>("/api/resume-library", []);
+  const [jobId, setJobId] = useState(searchParams.get("job") || "");
+  const [resumeVersion, setResumeVersion] = useState("");
+  const [feedbackMode, setFeedbackMode] = useState<"coaching" | "simulation">(
+    "coaching",
+  );
+  const job = jobs.data.find((item) => item.id === Number(jobId));
+  useEffect(() => {
+    if (job) {
+      setRole(job.target_role);
+      setCompany(job.company);
+      setJd(job.jd_text);
+      setResumeVersion(
+        job.resume_version_id ? String(job.resume_version_id) : "",
+      );
+    }
+  }, [job?.id]);
 
   useEffect(() => {
-    api.get<SessionInfo[]>("/api/interview/sessions").then(setSessions).catch(() => {});
+    api
+      .get<SessionInfo[]>("/api/interview/sessions")
+      .then(setSessions)
+      .catch(() => {});
   }, []);
 
   async function start() {
@@ -73,6 +102,11 @@ function SetupView() {
         target_role: role.trim(),
         company: company.trim(),
         jd_text: jd,
+        job_id: Number(jobId) || undefined,
+        resume_version_id: Number(resumeVersion) || undefined,
+        intel_report_id: Number(searchParams.get("intel")) || undefined,
+        locale,
+        feedback_mode: feedbackMode,
       };
       await store.createAndStart(payload);
       const newSid = useInterviewStore.getState().sessionId;
@@ -89,8 +123,12 @@ function SetupView() {
       <Card className="p-6 space-y-6 animate-ink-up">
         <div>
           <div className="eyebrow mb-2">{t("interview.setup.eyebrow")}</div>
-          <h2 className="font-display text-2xl font-black tracking-wide">{t("interview.setup.title")}</h2>
-          <p className="font-kai text-xs text-ink-soft mt-2 leading-5">{t("interview.setup.desc")}</p>
+          <h2 className="font-display text-2xl font-black tracking-wide">
+            {t("interview.setup.title")}
+          </h2>
+          <p className="font-kai text-xs text-ink-soft mt-2 leading-5">
+            {t("interview.setup.desc")}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -140,16 +178,74 @@ function SetupView() {
               ＋
             </button>
             <span className="font-kai text-xs text-ink-faint">
-              {t("interview.setup.rounds.unit")} · {t("interview.setup.rounds.range")}
+              {t("interview.setup.rounds.unit")} ·{" "}
+              {t("interview.setup.rounds.range")}
             </span>
           </div>
         </div>
 
+        <Field label={c("关联岗位档案", "Related opportunity")}>
+          <select
+            className={inputBoxCls}
+            value={jobId}
+            onChange={(e) => setJobId(e.target.value)}
+          >
+            <option value="">
+              {c("通用 / 手动设置", "General / manual setup")}
+            </option>
+            {jobs.data.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.company} · {item.target_role} · {item.city}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label={c("本次使用的简历", "Resume for this interview")}>
+          <select
+            className={inputBoxCls}
+            value={resumeVersion}
+            onChange={(e) => setResumeVersion(e.target.value)}
+          >
+            <option value="">
+              {c(
+                "仅使用已确认经历与档案",
+                "Confirmed experiences and profile only",
+              )}
+            </option>
+            {library.data.flatMap((file) =>
+              (file.versions || [])
+                .filter((version) => !version.export_issues?.length)
+                .map((version) => (
+                  <option key={version.id} value={version.id}>
+                    {file.filename} · v{version.version_no} ·{" "}
+                    {version.context?.label || ""}
+                  </option>
+                )),
+            )}
+          </select>
+        </Field>
+        <Field label={c("反馈方式", "Feedback mode")}>
+          <select
+            className={inputBoxCls}
+            value={feedbackMode}
+            onChange={(e) =>
+              setFeedbackMode(e.target.value as "coaching" | "simulation")
+            }
+          >
+            <option value="coaching">
+              {c("训练：逐题查看反馈", "Coaching: feedback after each answer")}
+            </option>
+            <option value="simulation">
+              {c("模拟：结束后集中复盘", "Simulation: review at the end")}
+            </option>
+          </select>
+        </Field>
         <Field label={`${t("interview.setup.role")} *`}>
           <input
             className={`${inputCls} text-[15px]`}
             placeholder={t("interview.setup.role.placeholder")}
             value={role}
+            disabled={!!job}
             onChange={(e) => setRole(e.target.value)}
           />
         </Field>
@@ -159,6 +255,7 @@ function SetupView() {
             className={`${inputCls} text-[15px]`}
             placeholder={t("interview.setup.company.placeholder")}
             value={company}
+            disabled={!!job}
             onChange={(e) => setCompany(e.target.value)}
           />
         </Field>
@@ -169,24 +266,37 @@ function SetupView() {
             rows={5}
             placeholder={t("interview.setup.jd.placeholder")}
             value={jd}
+            disabled={!!job}
             onChange={(e) => setJd(e.target.value)}
           />
         </Field>
 
         {error && <p className="font-kai text-sm text-seal">✗ {error}</p>}
 
-        <Button className="w-full py-3 text-base tracking-[0.3em]" onClick={start} disabled={starting}>
-          {starting ? t("interview.setup.starting") : t("interview.setup.start")}
+        <Button
+          className="w-full py-3 text-base tracking-[0.3em]"
+          onClick={start}
+          disabled={starting}
+        >
+          {starting
+            ? t("interview.setup.starting")
+            : t("interview.setup.start")}
         </Button>
       </Card>
 
       <div className="space-y-3">
         <div className="flex items-end justify-between border-b-2 border-ink pb-2">
-          <h3 className="font-display text-base font-bold tracking-wide">{t("interview.setup.logbook")}</h3>
-          <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">LOGBOOK</span>
+          <h3 className="font-display text-base font-bold tracking-wide">
+            {t("interview.setup.logbook")}
+          </h3>
+          <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">
+            LOGBOOK
+          </span>
         </div>
         {sessions.length === 0 && (
-          <p className="font-kai text-xs text-ink-faint">{t("interview.setup.logbook.empty")}</p>
+          <p className="font-kai text-xs text-ink-faint">
+            {t("interview.setup.logbook.empty")}
+          </p>
         )}
         <div className="space-y-2 stagger">
           {sessions.slice(0, 8).map((s) => (
@@ -194,11 +304,14 @@ function SetupView() {
               <div className="border border-rule-strong bg-sheet rounded-[2px] px-3 py-2.5 transition-all duration-150 group-hover:border-seal/60 group-hover:-translate-x-[1px] group-hover:-translate-y-[1px] group-hover:shadow-print">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="truncate text-ink-soft group-hover:text-ink transition-colors">
-                    {modeLabel(t, s.mode)} · {s.target_role || t("interview.setup.logbook.untitled")}
+                    {modeLabel(t, s.mode)} ·{" "}
+                    {s.target_role || t("interview.setup.logbook.untitled")}
                   </span>
                   <span className="font-latin text-base text-seal shrink-0">
                     {s.total_score != null
-                      ? t("interview.setup.logbook.score", { score: Math.round(Number(s.total_score)) })
+                      ? t("interview.setup.logbook.score", {
+                          score: Math.round(Number(s.total_score)),
+                        })
                       : t("interview.setup.logbook.running")}
                   </span>
                 </div>
@@ -222,13 +335,21 @@ function ChatView() {
   const prevReport = useRef(store.report);
 
   useEffect(() => {
-    if (store.report && store.report !== prevReport.current) setShowReport(true);
+    if (store.report && store.report !== prevReport.current)
+      setShowReport(true);
     prevReport.current = store.report;
   }, [store.report]);
 
   useEffect(() => {
-    chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" });
-  }, [store.messages.length, store.stage, store.messages[store.messages.length - 1]?.content]);
+    chatRef.current?.scrollTo({
+      top: chatRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [
+    store.messages.length,
+    store.stage,
+    store.messages[store.messages.length - 1]?.content,
+  ]);
 
   function send() {
     const txt = input.trim();
@@ -247,20 +368,34 @@ function ChatView() {
         {/* 左：本场档案 */}
         <div className="space-y-3 hidden lg:block overflow-y-auto">
           <Card className="p-4">
-            <Stamp size="sm" tone={finished ? "moss" : "seal"} className="absolute right-3 top-3">
-              {finished ? t("chat.dossier.stamp.done") : t("chat.dossier.stamp.live")}
+            <Stamp
+              size="sm"
+              tone={finished ? "moss" : "seal"}
+              className="absolute right-3 top-3"
+            >
+              {finished
+                ? t("chat.dossier.stamp.done")
+                : t("chat.dossier.stamp.live")}
             </Stamp>
             <div className="eyebrow mb-1.5">Dossier</div>
-            <h3 className="font-display text-base font-bold mb-4">{t("chat.dossier")}</h3>
+            <h3 className="font-display text-base font-bold mb-4">
+              {t("chat.dossier")}
+            </h3>
             <div className="space-y-2.5 text-xs">
               <LeaderRow label={t("chat.dossier.mode")}>
                 {session ? modeLabel(t, session.mode) : "…"}
               </LeaderRow>
-              <LeaderRow label={t("chat.dossier.role")}>{session?.target_role || "—"}</LeaderRow>
+              <LeaderRow label={t("chat.dossier.role")}>
+                {session?.target_role || "—"}
+              </LeaderRow>
               {session?.company && (
-                <LeaderRow label={t("chat.dossier.company")}>{session.company}</LeaderRow>
+                <LeaderRow label={t("chat.dossier.company")}>
+                  {session.company}
+                </LeaderRow>
               )}
-              <LeaderRow label={t("chat.dossier.rounds")}>{session?.max_rounds ?? "—"}</LeaderRow>
+              <LeaderRow label={t("chat.dossier.rounds")}>
+                {session?.max_rounds ?? "—"}
+              </LeaderRow>
               <LeaderRow label={t("chat.dossier.status")}>
                 {finished ? (
                   <Badge tone="green">{t("chat.dossier.finished")}</Badge>
@@ -301,22 +436,33 @@ function ChatView() {
         {/* 中：面试记录（稿纸） */}
         <div className="flex flex-col min-h-0">
           <div className="flex items-end justify-between border-b-2 border-ink pb-2 mb-3 shrink-0">
-            <span className="font-display text-sm font-bold tracking-[0.14em]">{t("chat.transcript")}</span>
-            <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">TRANSCRIPT</span>
+            <span className="font-display text-sm font-bold tracking-[0.14em]">
+              {t("chat.transcript")}
+            </span>
+            <span className="font-mono text-[10px] tracking-[0.22em] text-ink-faint">
+              TRANSCRIPT
+            </span>
           </div>
-          <div ref={chatRef} className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-1 manuscript pl-4">
+          <div
+            ref={chatRef}
+            className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-1 manuscript pl-4"
+          >
             {store.messages.map((m, i) => (
               <ChatBubble
                 key={i}
                 message={m}
                 streaming={
-                  store.isStreaming && i === store.messages.length - 1 && m.role === "assistant"
+                  store.isStreaming &&
+                  i === store.messages.length - 1 &&
+                  m.role === "assistant"
                 }
               />
             ))}
             {store.stage && <StageIndicator label={store.stage.label} />}
             {store.messages.length === 0 && !store.stage && (
-              <p className="font-kai text-sm text-ink-faint">{t("chat.transcript.preparing")}</p>
+              <p className="font-kai text-sm text-ink-faint">
+                {t("chat.transcript.preparing")}
+              </p>
             )}
           </div>
 
@@ -325,7 +471,9 @@ function ChatView() {
               className={`${inputBoxCls} resize-none font-kai text-[15px] leading-7`}
               rows={2}
               placeholder={
-                finished ? t("chat.input.placeholder.finished") : t("chat.input.placeholder")
+                finished
+                  ? t("chat.input.placeholder.finished")
+                  : t("chat.input.placeholder")
               }
               value={input}
               disabled={store.isStreaming || finished}
@@ -353,16 +501,31 @@ function ChatView() {
         <div className="hidden lg:block min-h-0 overflow-y-auto">
           <Card className="p-4">
             <div className="flex items-end justify-between border-b border-rule pb-2 mb-4">
-              <h3 className="font-display text-base font-bold">{t("chat.scores")}</h3>
-              <span className="font-mono text-[10px] tracking-[0.18em] text-ink-faint">SCORES</span>
+              <h3 className="font-display text-base font-bold">
+                {t("chat.scores")}
+              </h3>
+              <span className="font-mono text-[10px] tracking-[0.18em] text-ink-faint">
+                SCORES
+              </span>
             </div>
-            <ScorePanel scores={store.scores} maxRounds={maxRounds} />
+            {session?.context?.feedback_mode === "simulation" && !finished ? (
+              <p className="text-sm leading-7 text-ink-soft">
+                {t("chat.feedbackAtEnd")}
+              </p>
+            ) : (
+              <ScorePanel scores={store.scores} maxRounds={maxRounds} />
+            )}
           </Card>
         </div>
       </div>
 
       {showReport && store.report && (
-        <ReportDrawer report={store.report} onClose={() => setShowReport(false)} />
+        <ReportDrawer
+          report={store.report}
+          sessionId={store.sessionId || undefined}
+          jobId={store.session?.context?.job_id}
+          onClose={() => setShowReport(false)}
+        />
       )}
     </>
   );

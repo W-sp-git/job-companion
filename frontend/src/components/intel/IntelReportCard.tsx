@@ -13,7 +13,13 @@ function hostOf(url: string): string {
   }
 }
 
-function RefChips({ sources }: { sources: IntelSource[] }) {
+function RefChips({
+  sources,
+  quote,
+}: {
+  sources: IntelSource[];
+  quote?: string;
+}) {
   if (!sources?.length) return null;
   return (
     <span className="inline-flex gap-0.5 ml-1">
@@ -21,7 +27,7 @@ function RefChips({ sources }: { sources: IntelSource[] }) {
         <a
           key={s.sid}
           href={`#intel-src-${s.sid}`}
-          title={s.title}
+          title={quote ? `${s.title}\n${quote}` : s.title}
           className="font-mono text-[9px] text-ink-faint hover:text-seal transition-colors"
         >
           [S{s.sid}]
@@ -45,8 +51,12 @@ function SectionTitle({ titleKey, en }: { titleKey: MessageKey; en: string }) {
   const { t } = useT();
   return (
     <div className="flex items-end justify-between border-b border-ink pb-1.5 mb-3">
-      <span className="font-display text-sm font-bold tracking-[0.1em]">{t(titleKey)}</span>
-      <span className="font-mono text-[9px] tracking-[0.22em] text-ink-faint">{en}</span>
+      <span className="font-display text-sm font-bold tracking-[0.1em]">
+        {t(titleKey)}
+      </span>
+      <span className="font-mono text-[9px] tracking-[0.22em] text-ink-faint">
+        {en}
+      </span>
     </div>
   );
 }
@@ -64,8 +74,18 @@ export default function IntelReportCard({
 }) {
   const { t } = useT();
   const navigate = useNavigate();
-  const { report, verification, sources, company, target_role, report_id, created_at } = payload;
-  const dateStr = created_at ? created_at.slice(0, 10).replace(/-/g, "") : "00000000";
+  const {
+    report,
+    verification,
+    sources,
+    company,
+    target_role,
+    report_id,
+    created_at,
+  } = payload;
+  const dateStr = created_at
+    ? created_at.slice(0, 10).replace(/-/g, "")
+    : "00000000";
   const coveragePct = Math.round(verification.coverage * 100);
 
   return (
@@ -74,10 +94,19 @@ export default function IntelReportCard({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="eyebrow mb-2">{t("intel.brief.eyebrow")}</div>
-          <h2 className="font-display text-2xl font-black tracking-wide truncate">{company}</h2>
+          <h2 className="font-display text-2xl font-black tracking-wide truncate">
+            {company}
+          </h2>
           <div className="font-mono text-[10px] tracking-[0.14em] text-ink-faint mt-2 space-x-3">
-            <span>{t("intel.brief.no", { date: dateStr, id: String(report_id).padStart(3, "0") })}</span>
-            {target_role && <span>{t("intel.brief.role", { role: target_role })}</span>}
+            <span>
+              {t("intel.brief.no", {
+                date: dateStr,
+                id: String(report_id).padStart(3, "0"),
+              })}
+            </span>
+            {target_role && (
+              <span>{t("intel.brief.role", { role: target_role })}</span>
+            )}
             <span>{t("intel.brief.sources", { n: sources.length })}</span>
           </div>
         </div>
@@ -114,12 +143,14 @@ export default function IntelReportCard({
               <span className="text-seal mt-0.5 shrink-0">▪</span>
               <p className="flex-1">
                 {b.text}
-                <RefChips sources={b.sources} />
+                <RefChips sources={b.sources} quote={b.evidence_quote} />
               </p>
               <UnverifiedBadge status={b.status} />
             </div>
           ))}
-          {!report.basics.length && <EmptyNote text={t("intel.brief.noBasics")} />}
+          {!report.basics.length && (
+            <EmptyNote text={t("intel.brief.noBasics")} />
+          )}
         </div>
       </section>
 
@@ -142,12 +173,14 @@ export default function IntelReportCard({
               {h.trend && (
                 <p className="font-kai text-xs text-ink-soft leading-5 mt-1">
                   {h.trend}
-                  <RefChips sources={h.sources} />
+                  <RefChips sources={h.sources} quote={h.evidence_quote} />
                 </p>
               )}
             </div>
           ))}
-          {!report.hiring.length && <EmptyNote text={t("intel.brief.noHiring")} />}
+          {!report.hiring.length && (
+            <EmptyNote text={t("intel.brief.noHiring")} />
+          )}
         </div>
       </section>
 
@@ -156,23 +189,32 @@ export default function IntelReportCard({
         <SectionTitle titleKey="intel.brief.s3" en="SALARY" />
         <div className="space-y-3.5">
           {report.salary.map((s, i) => (
-            <div key={i} className={s.status === "unverified" ? "opacity-60" : ""}>
+            <div
+              key={i}
+              className={s.status === "unverified" ? "opacity-60" : ""}
+            >
               {s.role_hint && (
                 <div className="font-mono text-[10px] tracking-[0.14em] text-ink-faint mb-1">
                   {s.role_hint}
                 </div>
               )}
               <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="font-latin text-2xl leading-tight text-seal">{s.range_text}</span>
+                <span className="font-latin text-2xl leading-tight text-seal">
+                  {s.range_text}
+                </span>
                 <UnverifiedBadge status={s.status} />
-                <RefChips sources={s.sources} />
+                <RefChips sources={s.sources} quote={s.evidence_quote} />
               </div>
               {s.notes && (
-                <p className="font-kai text-xs text-ink-soft leading-5 mt-1">{s.notes}</p>
+                <p className="font-kai text-xs text-ink-soft leading-5 mt-1">
+                  {s.notes}
+                </p>
               )}
             </div>
           ))}
-          {!report.salary.length && <EmptyNote text={t("intel.brief.noSalary")} />}
+          {!report.salary.length && (
+            <EmptyNote text={t("intel.brief.noSalary")} />
+          )}
         </div>
       </section>
 
@@ -181,7 +223,10 @@ export default function IntelReportCard({
         <SectionTitle titleKey="intel.brief.s4" en="PROCESS" />
         <div className="space-y-3">
           {report.process.map((p, i) => (
-            <div key={i} className={`flex gap-3 ${p.status === "unverified" ? "opacity-60" : ""}`}>
+            <div
+              key={i}
+              className={`flex gap-3 ${p.status === "unverified" ? "opacity-60" : ""}`}
+            >
               <span className="font-latin text-lg text-seal leading-6 shrink-0 w-5 text-right">
                 {i + 1}
               </span>
@@ -192,12 +237,14 @@ export default function IntelReportCard({
                 </div>
                 <p className="font-kai text-xs text-ink-soft leading-6 mt-0.5">
                   {p.detail}
-                  <RefChips sources={p.sources} />
+                  <RefChips sources={p.sources} quote={p.evidence_quote} />
                 </p>
               </div>
             </div>
           ))}
-          {!report.process.length && <EmptyNote text={t("intel.brief.noProcess")} />}
+          {!report.process.length && (
+            <EmptyNote text={t("intel.brief.noProcess")} />
+          )}
         </div>
       </section>
 
@@ -218,13 +265,15 @@ export default function IntelReportCard({
                 </Badge>
                 <p className="flex-1">
                   {r.text}
-                  <RefChips sources={r.sources} />
+                  <RefChips sources={r.sources} quote={r.evidence_quote} />
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="font-kai text-sm leading-6 text-ink-soft">{t("intel.brief.noRisk")}</p>
+          <p className="font-kai text-sm leading-6 text-ink-soft">
+            {t("intel.brief.noRisk")}
+          </p>
         )}
         <p className="font-mono text-[10px] text-ink-faint mt-3 pt-2 border-t border-seal/20">
           {t("intel.brief.disclaimer")}
@@ -241,7 +290,9 @@ export default function IntelReportCard({
               id={`intel-src-${s.sid}`}
               className="flex items-baseline gap-2 text-xs leading-5 scroll-mt-28"
             >
-              <span className="font-mono text-[10px] text-seal shrink-0">[S{s.sid}]</span>
+              <span className="font-mono text-[10px] text-seal shrink-0">
+                [S{s.sid}]
+              </span>
               <a
                 href={s.url}
                 target="_blank"
@@ -283,7 +334,7 @@ export default function IntelReportCard({
         <Button
           onClick={() =>
             navigate(
-              `/interview?company=${encodeURIComponent(company)}&role=${encodeURIComponent(target_role)}`,
+              `/interview?company=${encodeURIComponent(company)}&role=${encodeURIComponent(target_role)}&intel=${report_id}`,
             )
           }
           disabled={!target_role}

@@ -18,6 +18,10 @@ class InterviewState(TypedDict, total=False):
     target_role: str
     company: str
     jd_text: str
+    resume_context: dict
+    job_id: int | None
+    locale: str
+    feedback_mode: str
     max_rounds: int
     status: str  # created → answering → finishing → finished
 

@@ -8,7 +8,9 @@ from app.tools.intel_verify import extract_canonical_numbers, verify_intel_repor
 
 
 def _ev(sid: int, snippet: str, title: str = "t", lane: str = "salary") -> EvidenceItem:
-    return EvidenceItem(sid=sid, lane=lane, title=title, url=f"https://x/{sid}", snippet=snippet)
+    return EvidenceItem(
+        sid=sid, lane=lane, title=title, url=f"https://x/{sid}", snippet=snippet
+    )
 
 
 def test_extract_canonical_numbers_units():
@@ -25,7 +27,12 @@ def test_unit_alignment_verified():
         company="某公司",
         summary="薪资具备竞争力。",
         salary=[
-            {"role_hint": "后端", "range_text": "20-35K·14薪", "source_ids": [1]},
+            {
+                "role_hint": "后端",
+                "range_text": "20-35K·14薪",
+                "source_ids": [1],
+                "evidence_quote": "薪资范围 20k-35k，14薪",
+            },
             {"role_hint": "后端", "range_text": "月薪 2 万", "source_ids": [1]},
         ],
     )
@@ -70,9 +77,10 @@ def test_risk_without_source_dropped():
         ],
     )
     report_out, verification = verify_intel_report(report, evidence)
-    assert [r["text"] for r in report_out["risks"]] == ["业务调整"]
-    assert verification["dropped_risk"] == 1
-    assert any("剔除 1 条" in n for n in verification["notes"])
+    # A valid source ID cannot authorize a negative claim absent from its content.
+    assert report_out["risks"] == []
+    assert verification["dropped_risk"] == 2
+    assert any("剔除 2 条" in n for n in verification["notes"])
 
 
 def test_risk_with_hallucinated_number_dropped():
@@ -116,7 +124,14 @@ def test_single_digit_and_year_exempt():
     evidence = [_ev(1, "2026 年校园招聘启动，共 3 个批次")]
     report = IntelReport(
         summary="简述。",
-        hiring=[{"position": "后端", "trend": "2026 年启动招聘，共 3 个批次", "source_ids": [1]}],
+        hiring=[
+            {
+                "position": "后端",
+                "trend": "2026 年启动招聘，共 3 个批次",
+                "source_ids": [1],
+                "evidence_quote": "2026 年校园招聘启动，共 3 个批次",
+            }
+        ],
     )
     report_out, _ = verify_intel_report(report, evidence)
     assert report_out["hiring"][0]["status"] == "verified"
@@ -131,7 +146,14 @@ def test_all_green_coverage_and_sources_attached():
         company="某公司",
         summary="整体稳健。",
         basics=[{"text": "员工超 5000 人", "source_ids": [1]}],
-        process=[{"stage": "技术面", "detail": "含手撕代码", "source_ids": [2]}],
+        process=[
+            {
+                "stage": "技术面",
+                "detail": "含手撕代码",
+                "source_ids": [2],
+                "evidence_quote": "含手撕代码",
+            }
+        ],
     )
     report_out, verification = verify_intel_report(report, evidence)
     assert verification["coverage"] == 1.0

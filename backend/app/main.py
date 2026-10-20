@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from app.agents.interview_graph import close_interview_graph, get_interview_graph
 from app.api import api_router
@@ -22,6 +23,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="求职搭子智能体", version="0.1.0", lifespan=lifespan)
 app.include_router(api_router)
+
+
+@app.middleware("http")
+async def protect_workspace_reset(request: Request, call_next):
+    from app.api import privacy
+
+    if privacy.erasing and request.url.path.startswith("/api/"):
+        return JSONResponse({"detail": "工作区正在清空，请稍后重试"}, status_code=503)
+    tracked = (
+        request.url.path.startswith("/api/")
+        and request.url.path != "/api/privacy/erase"
+        and request.method in {"POST", "PUT", "PATCH", "DELETE"}
+    )
+    if tracked:
+        privacy.active_mutations += 1
+    try:
+        return await call_next(request)
+    finally:
+        if tracked:
+            privacy.active_mutations -= 1
 
 
 @app.get("/api/health")

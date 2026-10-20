@@ -48,6 +48,7 @@ StrList = Annotated[list[str], BeforeValidator(_str_list)]
 
 # ---------- 简历解析 ----------
 
+
 class EducationItem(BaseModel):
     school: str = ""
     major: str = ""
@@ -93,6 +94,7 @@ class ResumeRaw(BaseModel):
 
 # ---------- 简历优化 ----------
 
+
 class ResumeDraft(BaseModel):
     """优化后的简历。target_gaps：JD 要求但本人没有的技能（诚实标注差距，不得混入 skills）。"""
 
@@ -107,6 +109,7 @@ class ResumeDraft(BaseModel):
     projects: Projects = Field(default_factory=list)
     awards: StrList = Field(default_factory=list)
     target_gaps: StrList = Field(default_factory=list)
+    other: StrList = Field(default_factory=list)
 
 
 class ReviewIssue(BaseModel):
@@ -114,6 +117,8 @@ class ReviewIssue(BaseModel):
     location: str = ""
     problem: str = ""
     suggestion: str = ""
+    source_quote: str = ""
+    draft_quote: str = ""
 
 
 ReviewIssues = Annotated[list[ReviewIssue], BeforeValidator(_model_list)]
@@ -131,16 +136,17 @@ class JdKeywords(BaseModel):
 
 # ---------- 面试评分 ----------
 
+
 class DimensionScore(BaseModel):
     name: str = ""
-    score: float = 0.0
+    score: float = Field(0.0, ge=0, le=10)
 
 
 Dimensions = Annotated[list[DimensionScore], BeforeValidator(_dimension_list)]
 
 
 class AnswerEvaluation(BaseModel):
-    score: float = 0.0
+    score: float = Field(0.0, ge=0, le=10)
     dimensions: Dimensions = Field(default_factory=list)
     comment: str = ""
     needs_follow_up: bool = False
@@ -159,7 +165,7 @@ QaReviews = Annotated[list[QaReview], BeforeValidator(_model_list)]
 
 
 class InterviewReport(BaseModel):
-    overall_score: float = 0.0
+    overall_score: float = Field(0.0, ge=0, le=100)
     dimension_scores: Dimensions = Field(default_factory=list)
     strengths: StrList = Field(default_factory=list)
     weaknesses: StrList = Field(default_factory=list)
@@ -170,6 +176,7 @@ class InterviewReport(BaseModel):
 
 # ---------- 跨场弱点聚类 ----------
 
+
 class WeaknessTheme(BaseModel):
     theme: str = ""
     count: int = 0
@@ -177,7 +184,9 @@ class WeaknessTheme(BaseModel):
 
 
 class WeaknessClusters(BaseModel):
-    themes: Annotated[list[WeaknessTheme], BeforeValidator(_model_list)] = Field(default_factory=list)
+    themes: Annotated[list[WeaknessTheme], BeforeValidator(_model_list)] = Field(
+        default_factory=list
+    )
 
 
 # ---------- 公司背调 ----------
@@ -214,6 +223,7 @@ SourceIds = Annotated[list[int], BeforeValidator(_sid_list)]
 class SourcedClaim(BaseModel):
     text: str = ""
     source_ids: SourceIds = Field(default_factory=list)
+    evidence_quote: str = ""
 
 
 class HiringSignal(BaseModel):
@@ -221,6 +231,7 @@ class HiringSignal(BaseModel):
     location: str = ""
     trend: str = ""
     source_ids: SourceIds = Field(default_factory=list)
+    evidence_quote: str = ""
 
 
 class SalaryItem(BaseModel):
@@ -228,12 +239,14 @@ class SalaryItem(BaseModel):
     range_text: str = ""
     notes: str = ""
     source_ids: SourceIds = Field(default_factory=list)
+    evidence_quote: str = ""
 
 
 class InterviewStageItem(BaseModel):
     stage: str = ""
     detail: str = ""
     source_ids: SourceIds = Field(default_factory=list)
+    evidence_quote: str = ""
 
 
 class RiskSignal(BaseModel):
@@ -242,6 +255,7 @@ class RiskSignal(BaseModel):
     category: str = ""
     text: str = ""
     source_ids: SourceIds = Field(default_factory=list)
+    evidence_quote: str = ""
 
 
 class IntelReport(BaseModel):
@@ -249,10 +263,18 @@ class IntelReport(BaseModel):
     target_role: str = ""
     summary: str = ""
     summary_source_ids: SourceIds = Field(default_factory=list)
-    basics: Annotated[list[SourcedClaim], BeforeValidator(_model_list)] = Field(default_factory=list)
-    hiring: Annotated[list[HiringSignal], BeforeValidator(_model_list)] = Field(default_factory=list)
-    salary: Annotated[list[SalaryItem], BeforeValidator(_model_list)] = Field(default_factory=list)
+    basics: Annotated[list[SourcedClaim], BeforeValidator(_model_list)] = Field(
+        default_factory=list
+    )
+    hiring: Annotated[list[HiringSignal], BeforeValidator(_model_list)] = Field(
+        default_factory=list
+    )
+    salary: Annotated[list[SalaryItem], BeforeValidator(_model_list)] = Field(
+        default_factory=list
+    )
     process: Annotated[list[InterviewStageItem], BeforeValidator(_model_list)] = Field(
         default_factory=list
     )
-    risks: Annotated[list[RiskSignal], BeforeValidator(_model_list)] = Field(default_factory=list)
+    risks: Annotated[list[RiskSignal], BeforeValidator(_model_list)] = Field(
+        default_factory=list
+    )
